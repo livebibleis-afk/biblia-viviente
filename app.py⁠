@@ -1,0 +1,84 @@
+import os
+import requests
+from flask import Flask, request, jsonify
+from google import genai
+
+app = Flask(__name__)
+
+# Configuración de credenciales (asegúrate de definirlas en tus variables de entorno)
+# export GEMINI_API_KEY="tu-api-key-de-google"
+# export WHATSAPP_TOKEN="tu-token-permanente-de-meta"
+# export PHONE_NUMBER_ID="tu-phone-number-id-de-whatsapp"
+# export WEBHOOK_VERIFY_TOKEN="una-clave-secreta-para-verificar-el-webhook"
+
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+WHATSAPP_TOKEN = os.environ.get("WHATSAPP_TOKEN")
+PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
+VERIFY_TOKEN = os.environ.get("WEBHOOK_VERIFY_TOKEN", "clave_secreta_por_defecto")
+
+# Inicializar el cliente oficial de Gemini
+client = genai.Client(api_key=GEMINI_API_KEY)
+
+# 1. Endpoint para verificar el Webhook con Meta (Requerido por WhatsApp)
+@app.route("/webhook", methods=["GET"])
+def verify_webhook():
+    mode = request.args.get("hub.mode")
+    token = request.args.get("hub.verify_token")
+    challenge = request.args.get("hub.challenge")
+
+    if mode and token:
+        if mode == "subscribe" and token == VERIFY_TOKEN:
+            return challenge, 200
+        else:
+            return "Error de verificación", 403
+    return "Parámetros faltantes", 400
+
+# 2. Endpoint que recibe los mensajes de WhatsApp en tiempo real
+@app.route("/webhook", methods=["POST"])
+def receive_message():
+    body = request.get_json()
+
+    try:
+        # Verificar si la estructura corresponde a un mensaje de WhatsApp
+        if (
+            body.get("entry")
+            and body["entry"][0].get("changes")
+            and body["entry"][0]["changes"][0].get("value").get("messages")
+        ):
+            message_data = body["entry"][0]["changes"][0]["value"]["messages"][0]
+            from_number = message_data["from"]  # Número de teléfono del usuario
+            message_body = message_data["text"]["body"]  # Texto que envió
+
+            # Generar respuesta inteligente usando Gemini
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",  # O el modelo de tu preferencia
+                contents=message_body,
+            )
+            reply_text = response.text
+
+            # Enviar la respuesta de vuelta a WhatsApp usando la API de Meta
+            send_whatsapp_message(from_number, reply_text)
+
+        return jsonify({"status": "success"}), 200
+
+    except Exception as e:
+        print(f"Error procesando el mensaje: {e}")
+        return jsonify({"status": "error"}), 500
+
+# Función auxiliar para enviar mensajes mediante la Cloud API de WhatsApp
+def send_whatsapp_message(to_phone, text):
+    url = f"https://graph.facebook.com/v17.0/{PHONE_NUMBER_ID}/messages"
+    headers = {
+        "Authorization": f"Bearer {WHATSAPP_TOKEN}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": to_phone,
+        "text": {"body": text},
+    }
+    response = requests.post(url, json=payload, headers=headers)
+    return response.json()
+
+if __name__ == "__main__":
+    app.run(port=5000, debug=True)
