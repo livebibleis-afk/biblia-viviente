@@ -1,98 +1,245 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
-  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
-  <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Biblia Viviente">
-  <meta name="description" content="Biblia Viviente — Lectura limpia y moderna de la Biblia. Reina-Valera 1909.">
-  <meta name="color-scheme" content="light dark">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Biblia Interactiva Pro | Visor y Estudio Bíblico</title>
+  <meta name="description" content="Visor bíblico multiversión de alta velocidad con modo claro/oscuro, soporte offline y herramientas de estudio avanzadas." />
 
-  <title>Biblia Viviente</title>
+  <!-- PWA & Metadatos iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Biblia Pro" />
+  <link rel="apple-touch-icon" href="assets/icon.png" />
+  <link rel="manifest" href="manifest.json" />
 
-  <!-- Preconnect & fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+  <!-- Open Graph -->
+  <meta property="og:title" content="Biblia Interactiva Pro" />
+  <meta property="og:description" content="Visor bíblico multiversión offline y de alta velocidad." />
+  <meta property="og:type" content="website" />
 
-  <link rel="stylesheet" href="css/styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#1e1b4b', 950: '#0b0f19'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body>
-  <!-- App shell -->
-  <div id="app" class="app">
+<body class="bg-slate-50 dark:bg-[#070a13] text-slate-800 dark:text-slate-100 antialiased h-full flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
 
-    <!-- Header -->
-    <header class="header" id="header">
-      <div class="header-inner">
-        <button class="btn-icon" id="btn-back" aria-label="Volver" hidden>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  <!-- Barra de Progreso de Lectura -->
+  <div id="reading-progress" class="fixed top-0 left-0 h-1 bg-indigo-500 z-50 transition-all duration-150" style="width: 0%"></div>
+
+  <!-- Header Enriquecido y Ergonómico -->
+  <header class="sticky top-0 z-40 backdrop-blur-xl bg-white/80 dark:bg-[#070a13]/80 border-b border-slate-200 dark:border-white/10 pt-[env(safe-area-inset-top)]">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      
+      <!-- Navegación Izquierda -->
+      <div class="flex items-center gap-3">
+        <button id="btn-back" class="hidden w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors" aria-label="Volver">
+          <i class="fa-solid fa-arrow-left"></i>
         </button>
-
-        <div class="header-title-wrap">
-          <h1 class="header-title" id="header-title">Biblia Viviente</h1>
-          <p class="header-subtitle" id="header-subtitle">Reina-Valera 1909</p>
-        </div>
-
-        <div class="header-actions">
-          <button class="btn-icon" id="btn-theme" aria-label="Cambiar tema">
-            <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-            <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          </button>
+        <div class="flex flex-col">
+          <span id="header-title" class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
+            Santa Biblia
+          </span>
+          <!-- Barra de contexto interactiva -->
+          <div class="flex items-center gap-2">
+            <select id="select-version" class="version-select text-xs font-semibold bg-transparent text-indigo-600 dark:text-indigo-400 focus:outline-none cursor-pointer py-0.5" aria-label="Seleccionar versión bíblica">
+              <option value="rvr1909" class="dark:bg-[#070a13]">Reina-Valera 1909</option>
+              <option value="SpanishReinaValera1960Bible" class="dark:bg-[#070a13]">RVR 1960</option>
+              <option value="SpanishNVI" class="dark:bg-[#070a13]">Nueva Versión Internacional (NVI)</option>
+              <option value="SpanishTLA" class="dark:bg-[#070a13]">Traducción en Lenguaje Actual (TLA)</option>
+              <option value="SpanishLBLA" class="dark:bg-[#070a13]">La Biblia de las Américas (LBLA)</option>
+              <option value="SpanishDHH" class="dark:bg-[#070a13]">Dios Habla Hoy (DHH)</option>
+            </select>
+            <span class="text-slate-400 text-xs">•</span>
+            <span id="current-reference-badge" class="text-xs font-medium text-slate-500 dark:text-slate-400 truncate max-w-[120px] sm:max-w-xs">Selecciona un libro</span>
+          </div>
         </div>
       </div>
-    </header>
 
-    <!-- Main content -->
-    <main class="main" id="main">
-      <!-- View: Books -->
-      <section class="view view-books" id="view-books">
-        <div class="search-bar">
-          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="search" id="search-books" placeholder="Buscar libro..." autocomplete="off" enterkeyhint="search">
+      <!-- Barra de herramientas de lectura (.header-actions) -->
+      <div class="flex items-center gap-1.5 sm:gap-2 header-actions">
+        <button id="btn-search-global" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors" aria-label="Buscar en toda la Biblia" title="Buscar versículos">
+          <i class="fa-solid fa-magnifying-glass text-sm"></i>
+        </button>
+        
+        <!-- Botón Tipografía con Popover -->
+        <div class="relative">
+          <button id="btn-font-settings" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors font-bold text-xs" aria-label="Ajustes de texto" title="Tamaño de fuente">
+            Aa
+          </button>
+          <!-- Popover Tipográfico -->
+          <div id="popover-font" class="hidden absolute right-0 mt-2 w-64 p-4 bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl z-50 space-y-4">
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tamaño de Letra</label>
+              <div class="flex items-center gap-2">
+                <button id="font-decrease" class="flex-1 py-2 bg-slate-100 dark:bg-white/5 rounded-xl font-bold text-sm hover:bg-slate-200 dark:hover:bg-white/10">A-</button>
+                <span id="font-size-display" class="text-xs font-semibold px-2">100%</span>
+                <button id="font-increase" class="flex-1 py-2 bg-slate-100 dark:bg-white/5 rounded-xl font-bold text-sm hover:bg-slate-200 dark:hover:bg-white/10">A+</button>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Interlineado</label>
+              <div class="flex items-center gap-2">
+                <button data-line="relaxed" class="line-btn flex-1 py-1.5 bg-slate-100 dark:bg-white/5 rounded-xl text-xs font-medium hover:bg-slate-200 dark:hover:bg-white/10">Normal</button>
+                <button data-line="loose" class="line-btn flex-1 py-1.5 bg-slate-100 dark:bg-white/5 rounded-xl text-xs font-medium hover:bg-slate-200 dark:hover:bg-white/10">Amplio</button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="testament-tabs" role="tablist">
-          <button class="tab active" data-testament="all" role="tab">Todos</button>
-          <button class="tab" data-testament="old" role="tab">Antiguo</button>
-          <button class="tab" data-testament="new" role="tab">Nuevo</button>
+        <button id="btn-bookmarks" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors" aria-label="Versículos guardados" title="Marcadores">
+          <i class="fa-solid fa-bookmark text-sm"></i>
+        </button>
+
+        <button id="btn-theme" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors" aria-label="Cambiar tema" title="Cambiar tema">
+          <i class="fa-solid fa-moon text-sm dark:hidden"></i>
+          <i class="fa-solid fa-sun text-sm hidden dark:block"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <main class="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 pb-24">
+    
+    <!-- Vista de Libros y Capítulos -->
+    <section id="view-books" class="space-y-6">
+      <!-- Tarjeta Continuar Leyendo -->
+      <div id="continue-reading-card" class="hidden bg-gradient-to-r from-indigo-900/40 via-indigo-950/60 to-slate-900 border border-indigo-500/30 rounded-2xl p-5 shadow-xl flex items-center justify-between cursor-pointer hover:border-indigo-400 transition-all group">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+            <i class="fa-solid fa-clock-rotate-left"></i> Continuar leyendo
+          </div>
+          <h3 id="continue-title" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-indigo-300 transition-colors">Génesis 1</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Retoma tu lectura exactamente donde la dejaste</p>
         </div>
+        <div class="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+          <i class="fa-solid fa-arrow-right"></i>
+        </div>
+      </div>
 
-        <div class="books-grid" id="books-grid"></div>
-      </section>
+      <!-- Pestañas de Testamentos con Conteo -->
+      <div class="flex gap-2 p-1 bg-slate-200/60 dark:bg-white/5 rounded-2xl border border-slate-300/50 dark:border-white/5">
+        <button id="tab-ot" class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm transition-all">
+          Antiguo Testamento (<span id="count-ot">39</span>)
+        </button>
+        <button id="tab-nt" class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
+          Nuevo Testamento (<span id="count-nt">27</span>)
+        </button>
+      </div>
 
-      <!-- View: Chapters -->
-      <section class="view view-chapters" id="view-chapters" hidden>
-        <div class="chapters-grid" id="chapters-grid"></div>
-      </section>
+      <!-- Grid de Libros -->
+      <div id="books-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <!-- Dinámico desde JS -->
+      </div>
+    </section>
 
-      <!-- View: Verses -->
-      <section class="view view-verses" id="view-verses" hidden>
-        <article class="verses-content" id="verses-content"></article>
+    <!-- Vista de Versículos -->
+    <section id="view-verses" class="hidden space-y-6">
+      <!-- Cabecera de capítulo -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
+        <h2 id="verses-chapter-title" class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white"></h2>
+        <button id="btn-audio" class="px-4 py-2 rounded-xl bg-indigo-50 dark:bg-white/5 border border-indigo-200 dark:border-white/10 text-indigo-600 dark:text-indigo-400 font-semibold text-xs flex items-center gap-2 hover:bg-indigo-100 transition-colors">
+          <i class="fa-solid fa-volume-high"></i>
+          <span>Escuchar</span>
+        </button>
+      </div>
 
-        <nav class="chapter-nav" id="chapter-nav">
-          <button class="btn-nav" id="btn-prev-chapter" disabled>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
-            <span>Anterior</span>
-          </button>
-          <button class="btn-nav" id="btn-next-chapter">
-            <span>Siguiente</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
-          </button>
-        </nav>
-      </section>
-    </main>
+      <!-- Contenedor de Versículos -->
+      <div id="verses-container" class="space-y-4 text-lg leading-relaxed font-sans">
+        <!-- Dinámico -->
+      </div>
 
-    <!-- Loading -->
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>Cargando la Biblia…</p>
+      <!-- Navegación inferior entre capítulos (#chapter-nav) -->
+      <div id="chapter-nav" class="flex items-center justify-between pt-8 border-t border-slate-200 dark:border-white/10">
+        <button id="btn-prev-chapter" class="px-4 py-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 font-bold text-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-colors flex items-center gap-2">
+          <i class="fa-solid fa-chevron-left text-xs"></i> Anterior
+        </button>
+        <button id="btn-chapter-picker" class="px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/25 flex items-center gap-2">
+          <i class="fa-solid fa-book-open text-xs"></i> Índice
+        </button>
+        <button id="btn-next-chapter" class="px-4 py-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 font-bold text-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-colors flex items-center gap-2">
+          Siguiente <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Barra Flotante de Acciones al Tocar Versículo -->
+  <div id="verse-floating-bar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 dark:bg-[#0c1222]/95 backdrop-blur-xl border border-white/15 px-5 py-3 rounded-2xl shadow-2xl z-50 flex items-center gap-4 text-white">
+    <button id="action-copy" class="flex items-center gap-1.5 text-xs font-semibold hover:text-indigo-400 transition-colors" title="Copiar">
+      <i class="fa-solid fa-copy text-sm"></i> Copiar
+    </button>
+    <span class="w-[1px] h-4 bg-white/20"></span>
+    <button id="action-highlight" class="flex items-center gap-1.5 text-xs font-semibold hover:text-amber-400 transition-colors" title="Resaltar">
+      <i class="fa-solid fa-highlighter text-sm"></i> Resaltar
+    </button>
+    <span class="w-[1px] h-4 bg-white/20"></span>
+    <button id="action-share" class="flex items-center gap-1.5 text-xs font-semibold hover:text-cyan-400 transition-colors" title="Compartir">
+      <i class="fa-solid fa-share-nodes text-sm"></i> Compartir
+    </button>
+  </div>
+
+  <!-- Modal de Búsqueda Global y Marcadores -->
+  <div id="modal-search" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-white/15 w-full max-w-2xl max-h-[85vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+      
+      <div class="p-4 sm:p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-3 w-full mr-4">
+          <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+          <input id="search-input" type="text" placeholder="Buscar palabras, frases o versículos..." class="w-full bg-transparent text-slate-900 dark:text-white placeholder-slate-400 font-medium focus:outline-none text-base" />
+        </div>
+        <button id="close-search" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Filtros de búsqueda -->
+      <div class="px-6 py-3 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/10 flex gap-2 text-xs font-semibold">
+        <button data-filter="all" class="search-filter-btn px-3 py-1.5 rounded-lg bg-indigo-600 text-white">Toda la Biblia</button>
+        <button data-filter="ot" class="search-filter-btn px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-white/5 text-slate-600 dark:text-slate-300">Antiguo Testamento</button>
+        <button data-filter="nt" class="search-filter-btn px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-white/5 text-slate-600 dark:text-slate-300">Nuevo Testamento</button>
+      </div>
+
+      <!-- Resultados -->
+      <div id="search-results" class="flex-grow overflow-y-auto p-6 space-y-4 divide-y divide-slate-100 dark:divide-white/5">
+        <div class="text-center text-slate-400 py-12 text-sm">Escribe al menos 3 caracteres para buscar</div>
+      </div>
+
     </div>
   </div>
 
-  <script src="js/app.js" type="module"></script>
+  <!-- Footer minimalista -->
+  <footer class="border-t border-slate-200 dark:border-white/5 py-6 text-center text-xs text-slate-400">
+    <p>Biblia Interactiva Pro • <span id="footer-version">RVR 1909</span></p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/app.js"></script>
 </body>
 </html>
