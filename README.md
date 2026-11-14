@@ -1,113 +1,108 @@
 # Biblia Viviente
 
-Aplicación web moderna para lectura de la Biblia, optimizada para **iOS Safari** y **Android**.
+**Lector bíblico moderno, limpio y optimizado para móviles.**  
+Versión: **Reina-Valera 1909** (dominio público)
 
-**Versión incluida:** Reina-Valera 1909 (dominio público)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-2ea44f?style=for-the-badge&logo=github)](https://livebibleis-afk.github.io/biblia-viviente/)
+[![License](https://img.shields.io/badge/Licencia-Uso%20libre-blue?style=for-the-badge)](#licencia)
+[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)](https://developer.mozilla.org/es/docs/Web/HTML)
+[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)](https://developer.mozilla.org/es/docs/Web/CSS)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)](https://developer.mozilla.org/es/docs/Web/JavaScript)
+
+---
+
+### 🔗 Demo en vivo
+
+**→ [Abrir Biblia Viviente](https://livebibleis-afk.github.io/biblia-viviente/)**
 
 ---
 
 ## Características
 
-- Lectura limpia: Libro → Capítulo → Versículos
-- Diseño responsive (móvil, tablet y escritorio)
-- **Modo oscuro / claro** (respeta preferencia del sistema + toggle manual)
-- Optimizado para pantallas con notch (safe-area)
-- Tipografía de lectura cómoda (Source Serif 4)
-- Interfaz táctil con áreas grandes
-- Navegación rápida entre capítulos
-- Buscador de libros
-- Filtro Antiguo / Nuevo Testamento
-- Sin frameworks pesados — HTML, CSS y JavaScript moderno
+| Función | Descripción |
+|---------|-------------|
+| **Lectura limpia** | Libro → Capítulo → Versículos con tipografía pensada para leer |
+| **Responsive** | Se adapta perfectamente a iPhone, Android, tablet y escritorio |
+| **Modo oscuro** | Respeta la preferencia del sistema + botón para cambiar manualmente |
+| **Optimizado iOS** | Safe-area, notch y barra de estado en Safari |
+| **Navegación rápida** | Anterior / Siguiente capítulo + botón de volver |
+| **Buscador** | Filtra libros por nombre al instante |
+| **Filtros** | Todos · Antiguo Testamento · Nuevo Testamento |
+| **Sin dependencias** | Solo HTML, CSS y JavaScript moderno |
 
 ---
 
 ## Estructura del proyecto
 
-```
+```text
 biblia-viviente/
-├── index.html          # Página principal
+├── index.html          # Aplicación principal
 ├── css/
-│   └── styles.css      # Estilos (tema, responsive, dark mode)
+│   └── styles.css      # Estilos (tema claro/oscuro + responsive)
 ├── js/
-│   └── app.js          # Lógica de la aplicación
+│   └── app.js          # Lógica de navegación y renderizado
 ├── data/
-│   └── rvr1909.json    # Biblia Reina-Valera 1909 en formato JSON
-├── assets/
-│   └── icons/          # (futuros iconos / PWA)
+│   └── rvr1909.json    # Biblia completa (Reina-Valera 1909)
+├── .nojekyll           # Necesario para GitHub Pages
 └── README.md
 ```
 
 ---
 
-## Cómo usarla
+## Tecnología
 
-### Opción 1 — Abrir localmente
-
-Simplemente abre `index.html` en el navegador.
-
-> **Nota:** Algunos navegadores bloquean `fetch` de archivos locales.  
-> Si ves un error de carga, usa un servidor local:
-
-```bash
-# Con Python
-python3 -m http.server 8080
-
-# Con Node (si tienes npx)
-npx serve .
-```
-
-Luego visita: `http://localhost:8080`
-
-### Opción 2 — Desplegar
-
-Puedes subir la carpeta completa a:
-
-- **GitHub Pages**
-- **Netlify** / **Vercel** (arrastrar y soltar)
-- Cualquier hosting estático
+- **HTML5** semántico
+- **CSS moderno**: variables, `color-mix()`, `dvh`, safe-area insets
+- **JavaScript** ES Modules (sin frameworks)
+- **Datos**: JSON optimizado a partir del XML de [Beblia](https://github.com/Beblia/Holy-Bible-XML-Format)
+- **Tipografías**: Inter + Source Serif 4 (Google Fonts)
 
 ---
 
-## Tecnología
+## Cómo usar localmente
 
-| Capa        | Tecnología                          |
-|-------------|-------------------------------------|
-| Markup      | HTML5 semántico                     |
-| Estilos     | CSS moderno (variables, `color-mix`, `dvh`, safe-area) |
-| Lógica      | JavaScript ES Modules (vanilla)     |
-| Datos       | JSON (convertido desde XML de Beblia) |
-| Tipografía  | Inter + Source Serif 4 (Google Fonts) |
+```bash
+# Clonar
+git clone https://github.com/livebibleis-afk/biblia-viviente.git
+cd biblia-viviente
+
+# Servir (recomendado)
+python3 -m http.server 8080
+# o
+npx serve .
+```
+
+Abre: [http://localhost:8080](http://localhost:8080)
 
 ---
 
 ## Datos bíblicos
 
-El archivo `data/rvr1909.json` proviene del repositorio:
-
-[Beblia/Holy-Bible-XML-Format](https://github.com/Beblia/Holy-Bible-XML-Format)
-
-- Traducción: **Reina-Valera 1909**
-- Estado: **Dominio público**
-- Convertido a JSON limpio para mejor rendimiento en el navegador
+| Campo | Valor |
+|-------|-------|
+| Traducción | Reina-Valera 1909 |
+| Estado legal | Dominio público |
+| Fuente original | [Beblia/Holy-Bible-XML-Format](https://github.com/Beblia/Holy-Bible-XML-Format) |
+| Formato en el proyecto | JSON limpio y compacto |
 
 ---
 
-## Roadmap posible
+## Roadmap
 
-- [ ] PWA (instalable + offline)
+- [ ] PWA (instalable + funcionamiento offline)
 - [ ] Más versiones (NVI, LBLA, VBL…)
-- [ ] Comparación de versiones
 - [ ] Buscador de texto completo
 - [ ] Marcadores y notas personales
-- [ ] Plan de lectura
+- [ ] Plan de lectura diario
 
 ---
 
 ## Licencia
 
-- **Código de la aplicación:** uso libre.
-- **Texto bíblico (RVR 1909):** dominio público.
+- **Código de la aplicación**: uso libre.
+- **Texto bíblico (RVR 1909)**: dominio público.
 
 ---
 
-Hecho con ❤️ para la lectura de la Palabra.
+Hecho con dedicación para la lectura de la Palabra.  
+**Biblia Viviente** — lectura limpia, en cualquier dispositivo.
