@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Biblia Viviente">
+  <meta name="description" content="Biblia Viviente — Lectura limpia y moderna de la Biblia. Reina-Valera 1909.">
+  <meta name="color-scheme" content="light dark">
+
+  <title>Biblia Viviente</title>
+
+  <!-- Preconnect & fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+</head>
+<body>
+  <!-- App shell -->
+  <div id="app" class="app">
+
+    <!-- Header -->
+    <header class="header" id="header">
+      <div class="header-inner">
+        <button class="btn-icon" id="btn-back" aria-label="Volver" hidden>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+
+        <div class="header-title-wrap">
+          <h1 class="header-title" id="header-title">Biblia Viviente</h1>
+          <p class="header-subtitle" id="header-subtitle">Reina-Valera 1909</p>
+        </div>
+
+        <div class="header-actions">
+          <button class="btn-icon" id="btn-theme" aria-label="Cambiar tema">
+            <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="main" id="main">
+      <!-- View: Books -->
+      <section class="view view-books" id="view-books">
+        <div class="search-bar">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="search" id="search-books" placeholder="Buscar libro..." autocomplete="off" enterkeyhint="search">
+        </div>
+
+        <div class="testament-tabs" role="tablist">
+          <button class="tab active" data-testament="all" role="tab">Todos</button>
+          <button class="tab" data-testament="old" role="tab">Antiguo</button>
+          <button class="tab" data-testament="new" role="tab">Nuevo</button>
+        </div>
+
+        <div class="books-grid" id="books-grid"></div>
+      </section>
+
+      <!-- View: Chapters -->
+      <section class="view view-chapters" id="view-chapters" hidden>
+        <div class="chapters-grid" id="chapters-grid"></div>
+      </section>
+
+      <!-- View: Verses -->
+      <section class="view view-verses" id="view-verses" hidden>
+        <article class="verses-content" id="verses-content"></article>
+
+        <nav class="chapter-nav" id="chapter-nav">
+          <button class="btn-nav" id="btn-prev-chapter" disabled>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+            <span>Anterior</span>
+          </button>
+          <button class="btn-nav" id="btn-next-chapter">
+            <span>Siguiente</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </nav>
+      </section>
+    </main>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Cargando la Biblia…</p>
+    </div>
+  </div>
+
+  <script src="js/app.js" type="module"></script>
+</body>
+</html>
