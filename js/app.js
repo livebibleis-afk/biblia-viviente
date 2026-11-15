@@ -19,7 +19,7 @@ const STATE = {
   currentVersion: 'rvr1909',
   currentBook: null,
   currentChapter: null,
-  view: 'books', // books | chapters | verses
+  view: 'books',
   testamentFilter: 'all',
   searchQuery: '',
   fontSizeScale: 100,
@@ -74,9 +74,6 @@ const DOM = {
   footerVersion: document.getElementById('footer-version')
 };
 
-// ─────────────────────────────────────────────
-// IndexedDB Helper for Offline Caching
-// ─────────────────────────────────────────────
 const DB_NAME = 'BibliaVivienteDB';
 const DB_STORE = 'versions';
 
@@ -120,58 +117,39 @@ async function cacheVersion(versionKey, data) {
   }
 }
 
-// ─────────────────────────────────────────────
-// XML Parser for Beblia Formats
-// ─────────────────────────────────────────────
 function parseBebliaXML(xmlText, translationName) {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-  
   const bookNodes = xmlDoc.querySelectorAll('book, BIBLEBOOK');
   const books = [];
-
   bookNodes.forEach((bNode, bIdx) => {
     const bNum = parseInt(bNode.getAttribute('number') || bNode.getAttribute('bnumber') || (bIdx + 1));
     const bName = BOOK_NAMES_ES[bNum - 1] || bNode.getAttribute('name') || `Libro ${bNum}`;
-    
     const chapterNodes = bNode.querySelectorAll('chapter, CHAPTER');
     const chapters = [];
-
     chapterNodes.forEach((cNode, cIdx) => {
       const cNum = parseInt(cNode.getAttribute('number') || cNode.getAttribute('cnumber') || (cIdx + 1));
       const verseNodes = cNode.querySelectorAll('verse, VERS');
       const verses = [];
-
       verseNodes.forEach((vNode, vIdx) => {
         const vNum = parseInt(vNode.getAttribute('number') || vNode.getAttribute('vnumber') || (vIdx + 1));
         const vText = vNode.textContent.trim();
         verses.push({ number: vNum, text: vText });
       });
-
-      if (verses.length > 0) {
-        chapters.push({ number: cNum, verses });
-      }
+      if (verses.length > 0) chapters.push({ number: cNum, verses });
     });
-
-    if (chapters.length > 0) {
-      books.push({ number: bNum, name: bName, chapters });
-    }
+    if (chapters.length > 0) books.push({ number: bNum, name: bName, chapters });
   });
-
-  return {
-    translation: translationName,
-    abbreviation: translationName.toUpperCase(),
-    books
-  };
+  return { translation: translationName, abbreviation: translationName.toUpperCase(), books };
 }
 
-// ─────────────────────────────────────────────
-// Data Loader with try/finally
-// ─────────────────────────────────────────────
 async function loadVersion(versionKey) {
-  DOM.loading.classList.remove('hidden');
+  if (DOM.loading) {
+    DOM.loading.classList.remove('hidden');
+    DOM.loading.hidden = false;
+    DOM.loading.style.display = '';
+  }
   try {
-    // Check Cache first
     const cached = await getCachedVersion(versionKey);
     if (cached) {
       STATE.bible = cached;
@@ -181,10 +159,8 @@ async function loadVersion(versionKey) {
 
     if (versionKey === 'rvr1909') {
       const res = await fetch('data/rvr1909.json');
-      if (!res.ok) throw new Error('No se pudo cargar rvr1909.json');
+      if (!res.ok) throw new Error('No se pudo cargar data/rvr1909.json (' + res.status + ')');
       let json = await res.json();
-      
-      // Normalización si raíz es objeto { books: [...] } o arreglo [...]
       if (Array.isArray(json)) {
         STATE.bible = { translation: 'Reina-Valera 1909', abbreviation: 'RVR1909', books: json };
       } else {
@@ -192,7 +168,6 @@ async function loadVersion(versionKey) {
         if (!STATE.bible.books) STATE.bible.books = [];
       }
     } else {
-      // Versiones Beblia Remotas
       const url = `https://raw.githubusercontent.com/Beblia/Holy-Bible-XML-Format/master/${versionKey}.xml`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Fallo de red al pedir ${versionKey}`);
@@ -200,32 +175,43 @@ async function loadVersion(versionKey) {
       STATE.bible = parseBebliaXML(xmlText, versionKey);
     }
 
-    // Asegurar nombres en español con BOOK_NAMES_ES
     STATE.bible.books.forEach(b => {
-      if (b.number >= 1 && b.number <= 66) {
-        b.name = BOOK_NAMES_ES[b.number - 1];
-      }
+      if (b.number >= 1 && b.number <= 66) b.name = BOOK_NAMES_ES[b.number - 1];
     });
 
     await cacheVersion(versionKey, STATE.bible);
     STATE.currentVersion = versionKey;
   } catch (err) {
     console.error('Error cargando versión:', err);
-    alert(`No se pudo cargar la versión seleccionada. Volviendo a Reina-Valera 1909.`);
-    DOM.selectVersion.value = 'rvr1909';
-    if (versionKey !== 'rvr1909') {
+    const msg = (err && err.message) ? err.message : String(err);
+    if (DOM.loading) {
+      DOM.loading.innerHTML = `
+        <div style="max-width:320px;padding:24px;text-align:center;font-family:system-ui,sans-serif">
+          <p style="font-weight:600;margin-bottom:8px">No se pudo cargar la Biblia</p>
+          <p style="color:#64748b;font-size:0.875rem;margin-bottom:16px">${msg}</p>
+          <button onclick="location.reload()" style="padding:10px 16px;border-radius:10px;background:#4f46e5;color:#fff;font-weight:600;border:none;cursor:pointer">Reintentar</button>
+        </div>`;
+      DOM.loading.classList.remove('hidden');
+      DOM.loading.hidden = false;
+      DOM.loading.style.display = '';
+    }
+    if (versionKey !== 'rvr1909' && DOM.selectVersion) {
+      DOM.selectVersion.value = 'rvr1909';
       await loadVersion('rvr1909');
     }
   } finally {
-    DOM.loading.hidden = true;
-    DOM.loading.classList.add('hidden');
-    updateUI();
+    if (STATE.bible) {
+      if (DOM.loading) {
+        DOM.loading.hidden = true;
+        DOM.loading.classList.add('hidden');
+        DOM.loading.style.display = 'none';
+      }
+      updateUI();
+      showView('books');
+    }
   }
 }
 
-// ─────────────────────────────────────────────
-// Render Functions
-// ─────────────────────────────────────────────
 function normalizeTestamentFilter(filter) {
   if (filter === 'old' || filter === 'ot' || filter === 'antiguo') return 'old';
   if (filter === 'new' || filter === 'nt' || filter === 'nuevo') return 'new';
@@ -233,68 +219,81 @@ function normalizeTestamentFilter(filter) {
 }
 
 function renderBooks() {
-  const { bible, searchQuery } = STATE;
-  if (!bible || !bible.books) return;
+  try {
+    const { bible, searchQuery } = STATE;
+    if (!bible || !bible.books || !DOM.booksGrid) return;
 
-  let books = bible.books;
-  const filter = normalizeTestamentFilter(STATE.testamentFilter);
+    let books = bible.books;
+    const filter = normalizeTestamentFilter(STATE.testamentFilter);
 
-  if (filter === 'old') {
-    books = books.filter(b => b.number <= 39);
-  } else if (filter === 'new') {
-    books = books.filter(b => b.number >= 40);
+    if (filter === 'old') books = books.filter(b => b.number <= 39);
+    else if (filter === 'new') books = books.filter(b => b.number >= 40);
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      books = books.filter(b => {
+        const name = (b.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return name.includes(q);
+      });
+    }
+
+    if (books.length === 0) {
+      DOM.booksGrid.innerHTML = '<div class="empty-state">No se encontraron libros</div>';
+      return;
+    }
+
+    DOM.booksGrid.innerHTML = books.map(book => `
+      <button class="book-card" data-book="${book.number}" type="button">
+        <span class="book-num">${String(book.number).padStart(2, '0')}</span>
+        <span class="book-name">${book.name}</span>
+        <span class="book-chapters">${(book.chapters || []).length} cap.</span>
+      </button>
+    `).join('');
+  } catch (err) {
+    console.error('renderBooks:', err);
   }
-
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    books = books.filter(b => {
-      const name = (b.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      return name.includes(q);
-    });
-  }
-
-  DOM.booksGrid.innerHTML = books.map(book => `
-    <button class="book-card" data-book="${book.number}" type="button">
-      <span class="book-num">${String(book.number).padStart(2, '0')}</span>
-      <span class="book-name">${book.name}</span>
-      <span class="book-chapters">${book.chapters.length} cap.</span>
-    </button>
-  `).join('');
 }
 
 function renderChapters(book) {
-  DOM.chaptersGrid.innerHTML = book.chapters.map(ch => `
-    <button class="chapter-btn" data-chapter="${ch.number}" type="button">
-      ${ch.number}
-    </button>
-  `).join('');
+  try {
+    if (!DOM.chaptersGrid || !book) return;
+    DOM.chaptersGrid.innerHTML = book.chapters.map(ch => `
+      <button class="chapter-btn" data-chapter="${ch.number}" type="button">${ch.number}</button>
+    `).join('');
+  } catch (err) {
+    console.error('renderChapters:', err);
+  }
 }
 
 function renderVerses(book, chapter) {
-  const versesHtml = chapter.verses.map(v => {
-    const isHighlighted = STATE.highlights[`${book.number}-${chapter.number}-${v.number}`];
-    return `
-      <p class="verse ${isHighlighted ? 'highlighted' : ''}" data-verse="${v.number}">
-        <sup class="verse-number">${v.number}</sup>
-        <span class="verse-text">${escapeHtml(v.text)}</span>
-      </p>
-    `;
-  }).join('');
+  try {
+    if (!DOM.versesContainer) return;
+    const versesHtml = chapter.verses.map(v => {
+      const isHighlighted = STATE.highlights[`${book.number}-${chapter.number}-${v.number}`];
+      return `
+        <p class="verse ${isHighlighted ? 'highlighted' : ''}" data-verse="${v.number}">
+          <sup class="verse-number">${v.number}</sup>
+          <span class="verse-text">${escapeHtml(v.text)}</span>
+        </p>`;
+    }).join('');
 
-  DOM.versesContainer.innerHTML = versesHtml;
-  DOM.versesChapterTitle.textContent = `${book.name} ${chapter.number}`;
-  DOM.currentReferenceBadge.textContent = `${book.name} ${chapter.number}`;
+    DOM.versesContainer.innerHTML = versesHtml;
+    if (DOM.versesChapterTitle) DOM.versesChapterTitle.textContent = `${book.name} ${chapter.number}`;
+    if (DOM.currentReferenceBadge) DOM.currentReferenceBadge.textContent = `${book.name} ${chapter.number}`;
 
-  // Guardar historial / Continuar leyendo
-  STATE.history = { bookNumber: book.number, bookName: book.name, chapterNumber: chapter.number };
-  localStorage.setItem('bv-history', JSON.stringify(STATE.history));
-  updateContinueReadingCard();
+    STATE.history = { bookNumber: book.number, bookName: book.name, chapterNumber: chapter.number };
+    localStorage.setItem('bv-history', JSON.stringify(STATE.history));
+    updateContinueReadingCard();
+  } catch (err) {
+    console.error('renderVerses:', err);
+  }
 }
 
 function updateContinueReadingCard() {
+  if (!DOM.continueReadingCard) return;
   if (STATE.history) {
     DOM.continueReadingCard.classList.remove('hidden');
-    DOM.continueTitle.textContent = `${STATE.history.bookName} ${STATE.history.chapterNumber}`;
+    if (DOM.continueTitle) DOM.continueTitle.textContent = `${STATE.history.bookName} ${STATE.history.chapterNumber}`;
   } else {
     DOM.continueReadingCard.classList.add('hidden');
   }
@@ -302,37 +301,37 @@ function updateContinueReadingCard() {
 
 function escapeHtml(text) {
   const div = document.createElement('div');
-  div.textContent = text;
+  div.textContent = text || '';
   return div.innerHTML;
 }
 
-// ─────────────────────────────────────────────
-// Navigation & Views
-// ─────────────────────────────────────────────
 function showView(view) {
-  STATE.view = view;
-  DOM.viewBooks.classList.add('hidden');
-  DOM.viewChapters.classList.add('hidden');
-  DOM.viewVerses.classList.add('hidden');
+  try {
+    STATE.view = view;
+    if (DOM.viewBooks) DOM.viewBooks.classList.add('hidden');
+    if (DOM.viewChapters) DOM.viewChapters.classList.add('hidden');
+    if (DOM.viewVerses) DOM.viewVerses.classList.add('hidden');
 
-  if (view === 'books') {
-    DOM.viewBooks.classList.remove('hidden');
-    DOM.btnBack.classList.add('hidden');
-    DOM.headerTitle.textContent = 'Biblia Viviente';
-    DOM.currentReferenceBadge.textContent = STATE.bible.translation || 'Reina-Valera 1909';
-  } else if (view === 'chapters') {
-    DOM.viewChapters.classList.remove('hidden');
-    DOM.btnBack.classList.remove('hidden');
-    DOM.headerTitle.textContent = STATE.currentBook.name;
-    DOM.currentReferenceBadge.textContent = `${STATE.currentBook.chapters.length} capítulos`;
-  } else if (view === 'verses') {
-    DOM.viewVerses.classList.remove('hidden');
-    DOM.btnBack.classList.remove('hidden');
-    DOM.headerTitle.textContent = `${STATE.currentBook.name} ${STATE.currentChapter.number}`;
-    DOM.currentReferenceBadge.textContent = STATE.bible.translation;
+    if (view === 'books') {
+      if (DOM.viewBooks) DOM.viewBooks.classList.remove('hidden');
+      if (DOM.btnBack) DOM.btnBack.classList.add('hidden');
+      if (DOM.headerTitle) DOM.headerTitle.textContent = 'Biblia Viviente';
+      if (DOM.currentReferenceBadge) DOM.currentReferenceBadge.textContent = (STATE.bible && STATE.bible.translation) || 'Reina-Valera 1909';
+    } else if (view === 'chapters' && STATE.currentBook) {
+      if (DOM.viewChapters) DOM.viewChapters.classList.remove('hidden');
+      if (DOM.btnBack) DOM.btnBack.classList.remove('hidden');
+      if (DOM.headerTitle) DOM.headerTitle.textContent = STATE.currentBook.name;
+      if (DOM.currentReferenceBadge) DOM.currentReferenceBadge.textContent = `${STATE.currentBook.chapters.length} capítulos`;
+    } else if (view === 'verses' && STATE.currentBook && STATE.currentChapter) {
+      if (DOM.viewVerses) DOM.viewVerses.classList.remove('hidden');
+      if (DOM.btnBack) DOM.btnBack.classList.remove('hidden');
+      if (DOM.headerTitle) DOM.headerTitle.textContent = `${STATE.currentBook.name} ${STATE.currentChapter.number}`;
+      if (DOM.currentReferenceBadge) DOM.currentReferenceBadge.textContent = STATE.bible.translation || '';
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  } catch (err) {
+    console.error('showView:', err);
   }
-
-  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 function openBook(bookNum) {
@@ -354,115 +353,128 @@ function openChapter(chapNum) {
 function updateUI() {
   if (STATE.bible) {
     renderBooks();
-    DOM.footerVersion.textContent = STATE.bible.translation;
+    if (DOM.footerVersion) DOM.footerVersion.textContent = STATE.bible.translation || 'Reina-Valera 1909';
   }
 }
 
-// ─────────────────────────────────────────────
-// Events & Interactions
-// ─────────────────────────────────────────────
 function initEvents() {
-  DOM.selectVersion.addEventListener('change', (e) => {
-    loadVersion(e.target.value);
-  });
+  if (DOM.selectVersion) {
+    DOM.selectVersion.addEventListener('change', (e) => loadVersion(e.target.value));
+  }
 
-  DOM.btnTheme.addEventListener('click', () => {
-    const isDark = document.documentElement.classList.toggle('dark');
-    localStorage.setItem('bv-theme', isDark ? 'dark' : 'light');
-  });
+  if (DOM.btnTheme) {
+    DOM.btnTheme.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('bv-theme', isDark ? 'dark' : 'light');
+    });
+  }
 
-  DOM.btnBack.addEventListener('click', () => {
-    if (STATE.view === 'verses') showView('chapters');
-    else if (STATE.view === 'chapters') showView('books');
-  });
+  if (DOM.btnBack) {
+    DOM.btnBack.addEventListener('click', () => {
+      if (STATE.view === 'verses') showView('chapters');
+      else if (STATE.view === 'chapters') showView('books');
+    });
+  }
 
-  DOM.continueReadingCard.addEventListener('click', () => {
-    if (!STATE.history) return;
-    const book = STATE.bible.books.find(b => b.number === STATE.history.bookNumber);
-    if (book) {
-      STATE.currentBook = book;
-      openChapter(STATE.history.chapterNumber);
-    }
-  });
+  if (DOM.continueReadingCard) {
+    DOM.continueReadingCard.addEventListener('click', () => {
+      if (!STATE.history || !STATE.bible) return;
+      const book = STATE.bible.books.find(b => b.number === STATE.history.bookNumber);
+      if (book) {
+        STATE.currentBook = book;
+        openChapter(STATE.history.chapterNumber);
+      }
+    });
+  }
 
-  DOM.searchBooks.addEventListener('input', (e) => {
-    STATE.searchQuery = e.target.value.trim();
-    renderBooks();
-  });
+  if (DOM.searchBooks) {
+    DOM.searchBooks.addEventListener('input', (e) => {
+      STATE.searchQuery = e.target.value.trim();
+      renderBooks();
+    });
+  }
 
-  // Filtros de Testamento
   document.querySelectorAll('.testament-tabs .tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.testament-tabs .tab').forEach(t => t.classList.remove('active', 'bg-white', 'dark:bg-indigo-600', 'shadow-sm'));
-      tab.classList.add('active', 'bg-white', 'dark:bg-indigo-600', 'shadow-sm');
+      document.querySelectorAll('.testament-tabs .tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
       STATE.testamentFilter = tab.dataset.testament;
       renderBooks();
     });
   });
 
-  DOM.booksGrid.addEventListener('click', (e) => {
-    const card = e.target.closest('.book-card');
-    if (card) openBook(parseInt(card.dataset.book));
-  });
+  if (DOM.booksGrid) {
+    DOM.booksGrid.addEventListener('click', (e) => {
+      const card = e.target.closest('.book-card');
+      if (card) openBook(parseInt(card.dataset.book, 10));
+    });
+  }
 
-  DOM.chaptersGrid.addEventListener('click', (e) => {
-    const btn = e.target.closest('.chapter-btn');
-    if (btn) openChapter(parseInt(btn.dataset.chapter));
-  });
+  if (DOM.chaptersGrid) {
+    DOM.chaptersGrid.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chapter-btn');
+      if (btn) openChapter(parseInt(btn.dataset.chapter, 10));
+    });
+  }
 
-  DOM.btnChapterPicker.addEventListener('click', () => showView('chapters'));
+  if (DOM.btnChapterPicker) {
+    DOM.btnChapterPicker.addEventListener('click', () => showView('chapters'));
+  }
 
-  DOM.btnPrev.addEventListener('click', () => {
-    const cIdx = STATE.currentBook.chapters.findIndex(c => c.number === STATE.currentChapter.number);
-    if (cIdx > 0) openChapter(STATE.currentBook.chapters[cIdx - 1].number);
-    else {
-      const bIdx = STATE.bible.books.findIndex(b => b.number === STATE.currentBook.number);
-      if (bIdx > 0) {
-        STATE.currentBook = STATE.bible.books[bIdx - 1];
-        renderChapters(STATE.currentBook);
-        openChapter(STATE.currentBook.chapters[STATE.currentBook.chapters.length - 1].number);
+  if (DOM.btnPrev) {
+    DOM.btnPrev.addEventListener('click', () => {
+      if (!STATE.currentBook || !STATE.currentChapter) return;
+      const cIdx = STATE.currentBook.chapters.findIndex(c => c.number === STATE.currentChapter.number);
+      if (cIdx > 0) openChapter(STATE.currentBook.chapters[cIdx - 1].number);
+      else {
+        const bIdx = STATE.bible.books.findIndex(b => b.number === STATE.currentBook.number);
+        if (bIdx > 0) {
+          STATE.currentBook = STATE.bible.books[bIdx - 1];
+          renderChapters(STATE.currentBook);
+          openChapter(STATE.currentBook.chapters[STATE.currentBook.chapters.length - 1].number);
+        }
       }
-    }
-  });
+    });
+  }
 
-  DOM.btnNext.addEventListener('click', () => {
-    const cIdx = STATE.currentBook.chapters.findIndex(c => c.number === STATE.currentChapter.number);
-    if (cIdx < STATE.currentBook.chapters.length - 1) openChapter(STATE.currentBook.chapters[cIdx + 1].number);
-    else {
-      const bIdx = STATE.bible.books.findIndex(b => b.number === STATE.currentBook.number);
-      if (bIdx < STATE.bible.books.length - 1) {
-        STATE.currentBook = STATE.bible.books[bIdx + 1];
-        renderChapters(STATE.currentBook);
-        openChapter(STATE.currentBook.chapters[0].number);
+  if (DOM.btnNext) {
+    DOM.btnNext.addEventListener('click', () => {
+      if (!STATE.currentBook || !STATE.currentChapter) return;
+      const cIdx = STATE.currentBook.chapters.findIndex(c => c.number === STATE.currentChapter.number);
+      if (cIdx < STATE.currentBook.chapters.length - 1) openChapter(STATE.currentBook.chapters[cIdx + 1].number);
+      else {
+        const bIdx = STATE.bible.books.findIndex(b => b.number === STATE.currentBook.number);
+        if (bIdx < STATE.bible.books.length - 1) {
+          STATE.currentBook = STATE.bible.books[bIdx + 1];
+          renderChapters(STATE.currentBook);
+          openChapter(STATE.currentBook.chapters[0].number);
+        }
       }
-    }
-  });
+    });
+  }
 
-  // Popover Tipografía
-  DOM.btnFontSettings.addEventListener('click', (e) => {
-    e.stopPropagation();
-    DOM.popoverFont.classList.toggle('hidden');
-  });
+  if (DOM.btnFontSettings && DOM.popoverFont) {
+    DOM.btnFontSettings.addEventListener('click', (e) => {
+      e.stopPropagation();
+      DOM.popoverFont.classList.toggle('hidden');
+    });
+    document.addEventListener('click', (e) => {
+      if (!DOM.popoverFont.contains(e.target) && !DOM.btnFontSettings.contains(e.target)) {
+        DOM.popoverFont.classList.add('hidden');
+      }
+    });
+  }
 
-  document.addEventListener('click', (e) => {
-    if (!DOM.popoverFont.contains(e.target) && !DOM.btnFontSettings.contains(e.target)) {
-      DOM.popoverFont.classList.add('hidden');
-    }
-  });
-
-  DOM.fontIncrease.addEventListener('click', () => {
-    if (STATE.fontSizeScale < 160) {
-      STATE.fontSizeScale += 10;
-      applyTypography();
-    }
-  });
-
-  DOM.fontDecrease.addEventListener('click', () => {
-    if (STATE.fontSizeScale > 80) {
-      STATE.fontSizeScale -= 10;
-      applyTypography();
-    }
-  });
+  if (DOM.fontIncrease) {
+    DOM.fontIncrease.addEventListener('click', () => {
+      if (STATE.fontSizeScale < 160) { STATE.fontSizeScale += 10; applyTypography(); }
+    });
+  }
+  if (DOM.fontDecrease) {
+    DOM.fontDecrease.addEventListener('click', () => {
+      if (STATE.fontSizeScale > 80) { STATE.fontSizeScale -= 10; applyTypography(); }
+    });
+  }
 
   document.querySelectorAll('.line-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -471,180 +483,101 @@ function initEvents() {
     });
   });
 
-  // Acciones en Versículos (Click / Touch)
-  DOM.versesContainer.addEventListener('click', (e) => {
-    const verseEl = e.target.closest('.verse');
-    if (!verseEl) return;
-    const vNum = parseInt(verseEl.dataset.verse);
-    verseEl.classList.toggle('selected');
-    
-    const key = `${STATE.currentBook.number}-${STATE.currentChapter.number}-${vNum}`;
-    if (verseEl.classList.contains('selected')) {
-      STATE.selectedVerses.add(key);
-    } else {
-      STATE.selectedVerses.delete(key);
-    }
-
-    if (STATE.selectedVerses.size > 0) {
-      DOM.verseFloatingBar.classList.remove('hidden');
-    } else {
-      DOM.verseFloatingBar.classList.add('hidden');
-    }
-  });
-
-  // Floating Bar Actions
-  DOM.actionCopy.addEventListener('click', () => {
-    const textToCopy = Array.from(STATE.selectedVerses).map(k => {
-      const [bNum, cNum, vNum] = k.split('-');
-      const book = STATE.bible.books.find(b => b.number == bNum);
-      const chap = book.chapters.find(c => c.number == cNum);
-      const verse = chap.verses.find(v => v.number == vNum);
-      return `${book.name} ${cNum}:${vNum} - "${verse.text}"`;
-    }).join('\n');
-
-    navigator.clipboard.writeText(textToCopy + ` (${STATE.bible.translation})`);
-    alert('¡Versículos copiados al portapapeles!');
-  });
-
-  DOM.actionHighlight.addEventListener('click', () => {
-    STATE.selectedVerses.forEach(k => {
-      STATE.highlights[k] = !STATE.highlights[k];
-      if (!STATE.highlights[k]) delete STATE.highlights[k];
-    });
-    localStorage.setItem('bv-highlights', JSON.stringify(STATE.highlights));
-    renderVerses(STATE.currentBook, STATE.currentChapter);
-    DOM.verseFloatingBar.classList.add('hidden');
-    STATE.selectedVerses.clear();
-  });
-
-  DOM.actionShare.addEventListener('click', () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Biblia Viviente',
-        text: `Lectura desde ${STATE.bible.translation}`
-      }).catch(() => {});
-    } else {
-      DOM.actionCopy.click();
-    }
-  });
-
-  // Búsqueda Global Modal (Máx 50 resultados)
-  DOM.btnSearchGlobal.addEventListener('click', () => DOM.modalSearch.classList.remove('hidden'));
-  DOM.closeSearch.addEventListener('click', () => DOM.modalSearch.classList.add('hidden'));
-
-  DOM.searchInput.addEventListener('input', (e) => {
-    const q = e.target.value.trim().toLowerCase();
-    if (q.length < 3) {
-      DOM.searchResults.innerHTML = `<div class="text-center text-slate-400 py-12 text-sm">Escribe al menos 3 caracteres para buscar</div>`;
-      return;
-    }
-
-    let results = [];
-    const filter = document.querySelector('.search-filter-btn.bg-indigo-600')?.dataset.filter || 'all';
-
-    for (const book of STATE.bible.books) {
-      if (filter === 'ot' && book.number > 39) continue;
-      if (filter === 'nt' && book.number < 40) continue;
-
-      for (const chap of book.chapters) {
-        for (const v of chap.verses) {
-          if (v.text.toLowerCase().includes(q)) {
-            results.push({ book, chap, v });
-            if (results.length >= 50) break;
-          }
-        }
-        if (results.length >= 50) break;
+  if (DOM.versesContainer) {
+    DOM.versesContainer.addEventListener('click', (e) => {
+      const verseEl = e.target.closest('.verse');
+      if (!verseEl || !STATE.currentBook || !STATE.currentChapter) return;
+      const vNum = parseInt(verseEl.dataset.verse, 10);
+      verseEl.classList.toggle('selected');
+      const key = `${STATE.currentBook.number}-${STATE.currentChapter.number}-${vNum}`;
+      if (verseEl.classList.contains('selected')) STATE.selectedVerses.add(key);
+      else STATE.selectedVerses.delete(key);
+      if (DOM.verseFloatingBar) {
+        if (STATE.selectedVerses.size > 0) DOM.verseFloatingBar.classList.remove('hidden');
+        else DOM.verseFloatingBar.classList.add('hidden');
       }
-      if (results.length >= 50) break;
-    }
-
-    if (results.length === 0) {
-      DOM.searchResults.innerHTML = `<div class="text-center text-slate-400 py-12 text-sm">No se encontraron resultados</div>`;
-      return;
-    }
-
-    DOM.searchResults.innerHTML = results.map(r => `
-      <div class="p-3 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer search-result-item" data-b="${r.book.number}" data-c="${r.chap.number}">
-        <div class="text-xs font-bold text-indigo-500 mb-1">${r.book.name} ${r.chap.number}:${r.v.number}</div>
-        <p class="text-sm text-slate-700 dark:text-slate-300">${escapeHtml(r.v.text)}</p>
-      </div>
-    `).join('');
-  });
-
-  DOM.searchResults.addEventListener('click', (e) => {
-    const item = e.target.closest('.search-result-item');
-    if (item) {
-      const bNum = parseInt(item.dataset.b);
-      const cNum = parseInt(item.dataset.c);
-      DOM.modalSearch.classList.add('hidden');
-      STATE.currentBook = STATE.bible.books.find(b => b.number === bNum);
-      openChapter(cNum);
-    }
-  });
-
-  // Filtros de búsqueda global
-  document.querySelectorAll('.search-filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.search-filter-btn').forEach(b => b.classList.replace('bg-indigo-600', 'bg-slate-200'));
-      document.querySelectorAll('.search-filter-btn').forEach(b => b.classList.replace('text-white', 'text-slate-600'));
-      btn.classList.replace('bg-slate-200', 'bg-indigo-600');
-      btn.classList.replace('text-slate-600', 'text-white');
-      DOM.searchInput.dispatchEvent(new Event('input'));
     });
-  });
+  }
 
-  // Marcadores Modal
-  DOM.btnBookmarks.addEventListener('click', () => {
-    renderBookmarksModal();
-    DOM.modalBookmarks.classList.remove('hidden');
-  });
-  DOM.closeBookmarks.addEventListener('click', () => DOM.modalBookmarks.classList.add('hidden'));
+  if (DOM.btnBookmarks && DOM.modalBookmarks) {
+    DOM.btnBookmarks.addEventListener('click', () => {
+      renderBookmarksModal();
+      DOM.modalBookmarks.classList.remove('hidden');
+    });
+  }
+  if (DOM.closeBookmarks && DOM.modalBookmarks) {
+    DOM.closeBookmarks.addEventListener('click', () => DOM.modalBookmarks.classList.add('hidden'));
+  }
 
-  // Scroll progress bar
+  if (DOM.btnSearchGlobal && DOM.modalSearch) {
+    DOM.btnSearchGlobal.addEventListener('click', () => DOM.modalSearch.classList.remove('hidden'));
+  }
+  if (DOM.closeSearch && DOM.modalSearch) {
+    DOM.closeSearch.addEventListener('click', () => DOM.modalSearch.classList.add('hidden'));
+  }
+
   window.addEventListener('scroll', () => {
+    if (!DOM.readingProgress) return;
     const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
     const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-    const scrolled = (winScroll / height) * 100;
+    const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
     DOM.readingProgress.style.width = scrolled + '%';
   });
 }
 
 function applyTypography() {
-  DOM.fontSizeDisplay.textContent = `${STATE.fontSizeScale}%`;
+  if (DOM.fontSizeDisplay) DOM.fontSizeDisplay.textContent = `${STATE.fontSizeScale}%`;
   document.documentElement.style.setProperty('--verse-font-size', `${STATE.fontSizeScale / 100 * 1.15}rem`);
   document.documentElement.style.setProperty('--verse-line-height', STATE.lineSpacing === 'loose' ? '2.1' : '1.75');
-  DOM.popoverFont.classList.add('hidden');
+  if (DOM.popoverFont) DOM.popoverFont.classList.add('hidden');
 }
 
 function renderBookmarksModal() {
-  if (STATE.highlights && Object.keys(STATE.highlights).length > 0) {
+  if (!DOM.bookmarksList) return;
+  if (STATE.highlights && Object.keys(STATE.highlights).length > 0 && STATE.bible) {
     DOM.bookmarksList.innerHTML = Object.keys(STATE.highlights).map(k => {
       const [bNum, cNum, vNum] = k.split('-');
       const book = STATE.bible.books.find(b => b.number == bNum);
-      const chap = book?.chapters.find(c => c.number == cNum);
-      const verse = chap?.verses.find(v => v.number == vNum);
+      const chap = book && book.chapters.find(c => c.number == cNum);
+      const verse = chap && chap.verses.find(v => v.number == vNum);
       if (!verse) return '';
       return `
         <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
           <div class="text-xs font-bold text-amber-500 mb-1">${book.name} ${cNum}:${vNum}</div>
           <p class="text-xs text-slate-600 dark:text-slate-300">${escapeHtml(verse.text)}</p>
-        </div>
-      `;
+        </div>`;
     }).join('');
   } else {
-    DOM.bookmarksList.innerHTML = `<div class="text-center text-slate-400 py-12 text-sm">No hay versículos resaltados o marcados.</div>`;
+    DOM.bookmarksList.innerHTML = '<div class="text-center text-slate-400 py-12 text-sm">No hay versículos resaltados o marcados.</div>';
   }
 }
 
-// ─────────────────────────────────────────────
-// Initialization
-%─────────────────────────────────────────────
 async function init() {
-  const savedTheme = localStorage.getItem('bv-theme') || 'light';
-  if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+  try {
+    const savedTheme = localStorage.getItem('bv-theme') || 'light';
+    if (savedTheme === 'dark') document.documentElement.classList.add('dark');
 
-  initEvents();
-  await loadVersion('rvr1909');
+    const required = ['loading', 'booksGrid', 'viewBooks'];
+    for (const key of required) {
+      if (!DOM[key]) throw new Error('Falta el elemento DOM: ' + key + '. Revisa index.html');
+    }
+
+    initEvents();
+    await loadVersion('rvr1909');
+  } catch (err) {
+    console.error('Error en init:', err);
+    const el = document.getElementById('loading') || document.body;
+    el.innerHTML = `
+      <div style="padding:32px;text-align:center;font-family:system-ui,sans-serif">
+        <p style="font-weight:700;margin-bottom:8px">Error al iniciar la aplicación</p>
+        <p style="color:#64748b;font-size:14px;margin-bottom:16px">${err.message || err}</p>
+        <button onclick="location.reload()" style="padding:10px 16px;border-radius:10px;background:#4f46e5;color:#fff;border:none;cursor:pointer">Reintentar</button>
+      </div>`;
+  }
 }
 
-init();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
