@@ -1,1 +1,296 @@
-PLACEHOLDER_CSS
+/* ============================================
+   Biblia Viviente — Modern Bible Reader
+   Optimized for iOS Safari & Android
+   ============================================ */
+
+:root {
+  --bg: #f8fafc;
+  --bg-elevated: #ffffff;
+  --bg-subtle: #f1f5f9;
+  --text: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --accent-hover: #1d4ed8;
+  --verse-number: #64748b;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-lg: 0 10px 25px -5px rgba(0,0,0,.08), 0 8px 10px -6px rgba(0,0,0,.04);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --header-h: 56px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-serif: 'Source Serif 4', 'Georgia', 'Times New Roman', serif;
+  --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  --verse-font-size: 1.15rem;
+  --verse-line-height: 1.75;
+}
+
+[data-theme="dark"], html.dark {
+  --bg: #0f172a;
+  --bg-elevated: #1e293b;
+  --bg-subtle: #1e293b;
+  --text: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border: #334155;
+  --accent: #3b82f6;
+  --accent-soft: #1e3a5f;
+  --accent-hover: #60a5fa;
+  --verse-number: #94a3b8;
+  --shadow: 0 1px 3px rgba(0,0,0,.3);
+  --shadow-lg: 0 10px 25px -5px rgba(0,0,0,.4);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100%;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+button, input {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.main {
+  flex: 1;
+  padding-bottom: calc(24px + var(--safe-bottom));
+}
+
+.view {
+  padding: 16px 16px 32px;
+  animation: fadeIn 220ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.search-bar { position: relative; margin-bottom: 16px; }
+.search-icon {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  color: var(--text-muted); pointer-events: none;
+}
+.search-bar input {
+  width: 100%;
+  padding: 12px 16px 12px 42px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.95rem;
+  color: var(--text);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.testament-tabs {
+  display: flex; gap: 6px; margin-bottom: 20px;
+  background: var(--bg-subtle); padding: 4px; border-radius: 10px;
+}
+.tab {
+  flex: 1; padding: 8px 12px; font-size: 0.875rem; font-weight: 500;
+  border-radius: 8px; color: var(--text-secondary); transition: all var(--transition);
+}
+.tab.active {
+  background: var(--bg-elevated); color: var(--text); box-shadow: var(--shadow);
+}
+
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.book-card {
+  display: flex; flex-direction: column; align-items: flex-start;
+  padding: 14px 14px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: left;
+  min-height: 72px;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+}
+.book-card:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+.book-card:active { transform: scale(0.97); }
+.book-card .book-num { font-size: 0.7rem; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+.book-card .book-name { font-size: 0.9rem; font-weight: 600; line-height: 1.25; color: var(--text); }
+.book-card .book-chapters { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+
+.chapters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 8px;
+}
+.chapter-btn {
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.95rem; font-weight: 600;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  transition: all var(--transition);
+}
+.chapter-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.verses-content {
+  font-family: var(--font-serif);
+  font-size: var(--verse-font-size);
+  line-height: var(--verse-line-height);
+  color: var(--text);
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.verse {
+  position: relative;
+  margin-bottom: 0.9em;
+  padding: 0.3em 2.5rem 0.3em 0.5em;
+  border-radius: 6px;
+  transition: background var(--transition);
+}
+.verse:hover { background: var(--bg-subtle); }
+.verse.selected { background: var(--accent-soft); }
+.verse.highlighted {
+  background: rgba(234, 179, 8, 0.15);
+  border-left: 3px solid #eab308;
+}
+.verse-number {
+  font-family: var(--font-sans);
+  font-size: 0.7em;
+  font-weight: 600;
+  color: var(--verse-number);
+  vertical-align: super;
+  margin-right: 0.35em;
+  user-select: none;
+}
+
+.verse-audio-btn {
+  position: absolute;
+  right: 0.25rem;
+  top: 0.35rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.6rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--verse-number);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.45;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.verse:hover .verse-audio-btn,
+.verse.selected .verse-audio-btn { opacity: 1; }
+.verse-audio-btn:hover {
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+  border-color: rgba(99, 102, 241, 0.25);
+}
+.verse.speaking {
+  background: rgba(99, 102, 241, 0.12);
+  border-left: 3px solid #6366f1;
+  padding-left: 0.65rem;
+  border-radius: 0.5rem;
+}
+.verse.speaking .verse-audio-btn {
+  opacity: 1;
+  color: #6366f1;
+}
+#btn-audio.is-playing {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+}
+
+.chapter-nav {
+  display: flex; gap: 12px; margin-top: 40px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.btn-nav {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.9rem; font-weight: 500;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+}
+.btn-nav:not(:disabled):hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.btn-nav:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.loading {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+  background: var(--bg); z-index: 100;
+}
+.loading.hidden { opacity: 0; pointer-events: none; display: none !important; }
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading p { font-size: 0.9rem; color: var(--text-muted); }
+.empty-state { text-align: center; padding: 48px 16px; color: var(--text-muted); font-size: 0.95rem; }
+
+@media (min-width: 480px) {
+  .books-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+@supports (-webkit-touch-callout: none) {
+  .book-card, .chapter-btn, .btn-nav, .verse-audio-btn {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
