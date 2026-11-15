@@ -18,10 +18,10 @@
   <meta property="og:description" content="Visor bíblico multiversión offline y de alta velocidad." />
   <meta property="og:type" content="website" />
 
-  <!-- Google Fonts: Inter -->
+  <!-- Google Fonts: Inter & Source Serif 4 -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
 
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -33,7 +33,7 @@
       darkMode: 'class',
       theme: {
         extend: {
-          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Source Serif 4', 'serif'] },
           colors: {
             brand: {
               50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#1e1b4b', 950: '#0b0f19'
@@ -47,7 +47,13 @@
 </head>
 <body class="bg-slate-50 dark:bg-[#070a13] text-slate-800 dark:text-slate-100 antialiased h-full flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
 
-  <!-- Barra de Progreso de Lectura -->
+  <!-- Pantalla de Carga Segura -->
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Cargando Palabra Sagrada...</p>
+  </div>
+
+  <!-- Barra de Progreso de Lectura Superior -->
   <div id="reading-progress" class="fixed top-0 left-0 h-1 bg-indigo-500 z-50 transition-all duration-150" style="width: 0%"></div>
 
   <!-- Header Enriquecido y Ergonómico -->
@@ -61,17 +67,16 @@
         </button>
         <div class="flex flex-col">
           <span id="header-title" class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
-            Santa Biblia
+            Biblia Viviente
           </span>
-          <!-- Barra de contexto interactiva -->
+          <!-- Barra de contexto interactiva y Selector Multiversión -->
           <div class="flex items-center gap-2">
             <select id="select-version" class="version-select text-xs font-semibold bg-transparent text-indigo-600 dark:text-indigo-400 focus:outline-none cursor-pointer py-0.5" aria-label="Seleccionar versión bíblica">
               <option value="rvr1909" class="dark:bg-[#070a13]">Reina-Valera 1909</option>
-              <option value="SpanishReinaValera1960Bible" class="dark:bg-[#070a13]">RVR 1960</option>
-              <option value="SpanishNVI" class="dark:bg-[#070a13]">Nueva Versión Internacional (NVI)</option>
-              <option value="SpanishTLA" class="dark:bg-[#070a13]">Traducción en Lenguaje Actual (TLA)</option>
-              <option value="SpanishLBLA" class="dark:bg-[#070a13]">La Biblia de las Américas (LBLA)</option>
-              <option value="SpanishDHH" class="dark:bg-[#070a13]">Dios Habla Hoy (DHH)</option>
+              <option value="Spanish1960Bible" class="dark:bg-[#070a13]">RVR 1960</option>
+              <option value="SpanishNVIBible" class="dark:bg-[#070a13]">Nueva Versión Internacional (NVI)</option>
+              <option value="SpanishTLABible" class="dark:bg-[#070a13]">Traducción en Lenguaje Actual (TLA)</option>
+              <option value="SpanishLBLABible" class="dark:bg-[#070a13]">La Biblia de las Américas (LBLA)</option>
             </select>
             <span class="text-slate-400 text-xs">•</span>
             <span id="current-reference-badge" class="text-xs font-medium text-slate-500 dark:text-slate-400 truncate max-w-[120px] sm:max-w-xs">Selecciona un libro</span>
@@ -124,10 +129,10 @@
   </header>
 
   <!-- Contenido Principal -->
-  <main class="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 pb-24">
+  <main class="main max-w-4xl w-full mx-auto px-4 sm:px-6 py-6">
     
     <!-- Vista de Libros y Capítulos -->
-    <section id="view-books" class="space-y-6">
+    <section id="view-books" class="view space-y-6">
       <!-- Tarjeta Continuar Leyendo -->
       <div id="continue-reading-card" class="hidden bg-gradient-to-r from-indigo-900/40 via-indigo-950/60 to-slate-900 border border-indigo-500/30 rounded-2xl p-5 shadow-xl flex items-center justify-between cursor-pointer hover:border-indigo-400 transition-all group">
         <div class="space-y-1">
@@ -142,24 +147,34 @@
         </div>
       </div>
 
+      <!-- Buscador de Libros en Vivo -->
+      <div class="search-bar">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input id="search-books" type="text" placeholder="Filtrar libros por nombre..." aria-label="Filtrar libros" />
+      </div>
+
       <!-- Pestañas de Testamentos con Conteo -->
-      <div class="flex gap-2 p-1 bg-slate-200/60 dark:bg-white/5 rounded-2xl border border-slate-300/50 dark:border-white/5">
-        <button id="tab-ot" class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm transition-all">
-          Antiguo Testamento (<span id="count-ot">39</span>)
-        </button>
-        <button id="tab-nt" class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
-          Nuevo Testamento (<span id="count-nt">27</span>)
-        </button>
+      <div class="testament-tabs">
+        <button data-testament="all" class="tab active">Todos</button>
+        <button data-testament="old" class="tab">Antiguo Testamento (<span id="count-ot">39</span>)</button>
+        <button data-testament="new" class="tab">Nuevo Testamento (<span id="count-nt">27</span>)</button>
       </div>
 
       <!-- Grid de Libros -->
-      <div id="books-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      <div id="books-grid" class="books-grid">
         <!-- Dinámico desde JS -->
       </div>
     </section>
 
+    <!-- Vista de Capítulos -->
+    <section id="view-chapters" class="view hidden space-y-6">
+      <div id="chapters-grid" class="chapters-grid">
+        <!-- Dinámico -->
+      </div>
+    </section>
+
     <!-- Vista de Versículos -->
-    <section id="view-verses" class="hidden space-y-6">
+    <section id="view-verses" class="view hidden space-y-6">
       <!-- Cabecera de capítulo -->
       <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
         <h2 id="verses-chapter-title" class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white"></h2>
@@ -170,19 +185,19 @@
       </div>
 
       <!-- Contenedor de Versículos -->
-      <div id="verses-container" class="space-y-4 text-lg leading-relaxed font-sans">
+      <div id="verses-content" class="verses-content">
         <!-- Dinámico -->
       </div>
 
       <!-- Navegación inferior entre capítulos (#chapter-nav) -->
-      <div id="chapter-nav" class="flex items-center justify-between pt-8 border-t border-slate-200 dark:border-white/10">
-        <button id="btn-prev-chapter" class="px-4 py-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 font-bold text-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-colors flex items-center gap-2">
+      <div id="chapter-nav" class="chapter-nav">
+        <button id="btn-prev-chapter" class="btn-nav">
           <i class="fa-solid fa-chevron-left text-xs"></i> Anterior
         </button>
-        <button id="btn-chapter-picker" class="px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/25 flex items-center gap-2">
+        <button id="btn-chapter-picker" class="btn-nav" style="flex: 0.6;">
           <i class="fa-solid fa-book-open text-xs"></i> Índice
         </button>
-        <button id="btn-next-chapter" class="px-4 py-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 font-bold text-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-colors flex items-center gap-2">
+        <button id="btn-next-chapter" class="btn-nav">
           Siguiente <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
       </div>
@@ -205,7 +220,7 @@
     </button>
   </div>
 
-  <!-- Modal de Búsqueda Global y Marcadores -->
+  <!-- Modal de Búsqueda Global -->
   <div id="modal-search" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-white/15 w-full max-w-2xl max-h-[85vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
       
@@ -226,7 +241,7 @@
         <button data-filter="nt" class="search-filter-btn px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-white/5 text-slate-600 dark:text-slate-300">Nuevo Testamento</button>
       </div>
 
-      <!-- Resultados -->
+      <!-- Resultados (Máx 50) -->
       <div id="search-results" class="flex-grow overflow-y-auto p-6 space-y-4 divide-y divide-slate-100 dark:divide-white/5">
         <div class="text-center text-slate-400 py-12 text-sm">Escribe al menos 3 caracteres para buscar</div>
       </div>
@@ -234,9 +249,24 @@
     </div>
   </div>
 
+  <!-- Modal de Marcadores -->
+  <div id="modal-bookmarks" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-white/15 w-full max-w-lg max-h-[85vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+      <div class="p-4 sm:p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+        <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-bookmark text-indigo-500"></i> Versículos Guardados</h3>
+        <button id="close-bookmarks" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:bg-slate-200">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <div id="bookmarks-list" class="flex-grow overflow-y-auto p-6 space-y-3">
+        <div class="text-center text-slate-400 py-12 text-sm">No tienes versículos guardados aún.</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer minimalista -->
   <footer class="border-t border-slate-200 dark:border-white/5 py-6 text-center text-xs text-slate-400">
-    <p>Biblia Interactiva Pro • <span id="footer-version">RVR 1909</span></p>
+    <p>Biblia Viviente • <span id="footer-version">Reina-Valera 1909</span></p>
   </footer>
 
   <!-- Scripts -->

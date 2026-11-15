@@ -26,6 +26,8 @@
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-serif: 'Source Serif 4', 'Georgia', 'Times New Roman', serif;
   --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  --verse-font-size: 1.15rem;
+  --verse-line-height: 1.75;
 }
 
 /* Dark theme */
@@ -364,8 +366,8 @@ input:focus-visible {
 /* Verses */
 .verses-content {
   font-family: var(--font-serif);
-  font-size: 1.15rem;
-  line-height: 1.75;
+  font-size: var(--verse-font-size);
+  line-height: var(--verse-line-height);
   color: var(--text);
   max-width: 42rem;
   margin: 0 auto;
@@ -373,7 +375,22 @@ input:focus-visible {
 
 .verse {
   margin-bottom: 0.9em;
-  padding-left: 0.15em;
+  padding: 0.3em 0.5em;
+  border-radius: 6px;
+  transition: background var(--transition);
+}
+
+.verse:hover {
+  background: var(--bg-subtle);
+}
+
+.verse.selected {
+  background: var(--accent-soft);
+}
+
+.verse.highlighted {
+  background: rgba(234, 179, 8, 0.15);
+  border-left: 3px solid #eab308;
 }
 
 .verse-number {
@@ -480,10 +497,6 @@ input:focus-visible {
   .books-grid {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
-
-  .verses-content {
-    font-size: 1.2rem;
-  }
 }
 
 @media (min-width: 640px) {
@@ -493,11 +506,6 @@ input:focus-visible {
 
   .view {
     padding: 20px 24px 40px;
-  }
-
-  .verses-content {
-    font-size: 1.25rem;
-    line-height: 1.8;
   }
 }
 
@@ -511,7 +519,6 @@ input:focus-visible {
   }
 
   body {
-    /* prevent overscroll bounce on body */
     overscroll-behavior: none;
   }
 }
