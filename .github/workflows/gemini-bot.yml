@@ -1,1 +1,259 @@
-hhhh
+name: Gemini CLI
+
+on:
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+  repository_dispatch:
+    types: [telegram_prompt]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  gemini:
+    if: |
+      github.event_name == 'repository_dispatch' ||
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@gemini-cli')) ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@gemini-cli'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Analizar, editar archivos y responder
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          USER_PROMPT: ${{ github.event.client_payload.text || github.event.comment.body || github.event.issue.body }}
+          CHAT_ID: ${{ github.event.client_payload.chat_id }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          cat << 'EOF' > agente.mjs
+          import fs from "fs";
+          import path from "path";
+          import { execSync } from "child_process";
+
+          async function sendTelegram(chatId, text) {
+            const token = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
+            if (!token || !chatId) return;
+            await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chat_id: chatId, text: text.slice(0, 4000) })
+            });
+          }
+
+          async function sendTelegramDocument(chatId, filePath) {
+            const token = (process.env.TELEGRAM_BOT_TOKEN || "").trim();
+            if (!token || !chatId || !fs.existsSync(filePath)) return;
+            try {
+              const formData = new FormData();
+              formData.append("chat_id", chatId);
+              const content = fs.readFileSync(filePath);
+              const blob = new Blob([content], { type: "text/html" });
+              formData.append("document", blob, path.basename(filePath));
+              formData.append("caption", `📄 Archivo listo: toca ${path.basename(filePath)} para abrirlo.`);
+              await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+                method: "POST",
+                body: formData
+              });
+            } catch (e) {}
+          }
+
+          async function getAvailableModels(apiKey) {
+            // Lista prioritaria con los nuevos modelos 3.5 / 3.x y los alias 'latest' que nunca caducan
+            const preferred = [
+              "gemini-3.5-flash-lite",
+              "gemini-flash-latest",
+              "gemini-flash-lite-latest",
+              "gemini-3-flash-preview",
+              "gemini-3.1-pro-preview",
+              "gemini-2.5-flash"
+            ];
+            try {
+              const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+              if (!res.ok) return preferred;
+              const data = await res.json();
+              const available = (data.models || [])
+                .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
+                .map(m => m.name.replace(/^models\//, ""));
+
+              // Ordena primero los preferidos que existan en tu cuenta, y luego cualquier otro gemini disponible
+              const validPreferred = preferred.filter(m => available.includes(m));
+              const others = available.filter(m => m.startsWith("gemini-") && !validPreferred.includes(m) && !m.includes("tts") && !m.includes("image") && !m.includes("embedding"));
+              return [...validPreferred, ...others];
+            } catch (e) {
+              return preferred;
+            }
+          }
+
+          async function callGeminiWithFallback(apiKey, promptText) {
+            const models = await getAvailableModels(apiKey);
+            let lastError = null;
+
+            for (const model of models) {
+              const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+              for (let attempt = 1; attempt <= 2; attempt++) {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 240000);
+                try {
+                  const res = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                      contents: [{ parts: [{ text: promptText }] }],
+                      generationConfig: {
+                        responseMimeType: "application/json",
+                        temperature: 0.2
+                      }
+                    })
+                  });
+                  clearTimeout(timer);
+
+                  const data = await res.json();
+                  if (res.ok) return { data, modelUsed: model };
+
+                  lastError = `(${res.status}) en ${model}: ${JSON.stringify(data)}`;
+                  if (res.status === 404 || res.status === 400) break;
+
+                  if (res.status === 503 || res.status === 429) {
+                    await new Promise(r => setTimeout(r, attempt * 4000));
+                    continue;
+                  }
+                } catch (err) {
+                  clearTimeout(timer);
+                  lastError = err.message;
+                  await new Promise(r => setTimeout(r, 3000));
+                }
+              }
+            }
+            throw new Error(`Servidores saturados tras varios intentos. Último error: ${lastError}`);
+          }
+
+          function parseSafeJSON(rawText) {
+            const cleaned = rawText
+              .replace(/^```json\s*/i, "")
+              .replace(/^```\s*/i, "")
+              .replace(/\s*```$/, "")
+              .trim();
+            return JSON.parse(cleaned);
+          }
+
+          async function main() {
+            try {
+              const apiKey = (process.env.GEMINI_API_KEY || "").trim();
+              const userPrompt = process.env.USER_PROMPT || "";
+              const promptLower = userPrompt.toLowerCase();
+
+              const allFiles = execSync("git ls-files").toString().trim().split("\n").filter(Boolean);
+              const readableFiles = allFiles.filter(f =>
+                /\.(json|html|js|ts|css|py|md|yml|yaml|svg)$/i.test(f) &&
+                !f.includes("package-lock") &&
+                !f.startsWith(".github/")
+              );
+
+              let context = "Lista de archivos existentes en el repositorio:\n" + (allFiles.length ? allFiles.join("\n") : "(Repositorio vacío)") + "\n\n";
+
+              let matchedFiles = readableFiles.filter(f => {
+                const fullLower = f.toLowerCase();
+                const baseLower = path.basename(f).toLowerCase();
+                return promptLower.includes(fullLower) || promptLower.includes(baseLower);
+              });
+
+              if (matchedFiles.length === 0) {
+                matchedFiles = readableFiles.slice(0, 6);
+              }
+
+              for (const f of matchedFiles) {
+                try {
+                  const content = fs.readFileSync(f, "utf8").slice(0, 200000);
+                  context += `\n--- Contenido actual de ${f} ---\n${content}\n`;
+                } catch (e) {}
+              }
+
+              const systemInstruction = `Eres el ingeniero desarrollador principal de este repositorio (especialista en visores SVG-CAD 2D/3D con HTML, Tailwind CSS y Three.js). Responde siempre en español.
+          Tienes el contenido completo de los archivos del repositorio debajo de esta instrucción.
+          Si el usuario solo hace una pregunta o pide analizar un archivo, respóndela detalladamente en "reply" y deja "filesToUpdate" vacío [].
+          Si te pide editar, corregir o crear un archivo, incluye el código COMPLETO y funcional de cada archivo modificado o creado en "filesToUpdate".
+
+          Responde ÚNICAMENTE con un JSON válido con esta estructura:
+          {
+            "reply": "Explicación clara de la respuesta o de los cambios realizados",
+            "commitMessage": "Mensaje corto del commit",
+            "filesToUpdate": [
+              { "path": "archivo.html", "content": "código completo" }
+            ]
+          }`;
+
+              const promptText = `${systemInstruction}\n\nInstrucción del usuario: ${userPrompt}\n\n${context}`;
+
+              const { data, modelUsed } = await callGeminiWithFallback(apiKey, promptText);
+              const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+              const result = parseSafeJSON(rawText);
+              let replyMsg = `${result.reply || "Proceso completado."}\n\n📂 Archivos leídos: ${matchedFiles.join(", ") || "Ninguno"}\n🤖 Modelo: ${modelUsed}`;
+              const updatedList = [];
+
+              if (Array.isArray(result.filesToUpdate) && result.filesToUpdate.length > 0) {
+                for (const fileObj of result.filesToUpdate) {
+                  if (fileObj.path && typeof fileObj.content === "string") {
+                    const dir = path.dirname(fileObj.path);
+                    if (dir && dir !== ".") fs.mkdirSync(dir, { recursive: true });
+                    fs.writeFileSync(fileObj.path, fileObj.content, "utf8");
+                    updatedList.push(fileObj.path);
+                  }
+                }
+
+                if (updatedList.length > 0) {
+                  execSync('git config user.name "github-actions[bot]"');
+                  execSync('git config user.email "41898282+github-actions[bot]@users.noreply.github.com"');
+                  for (const p of updatedList) execSync(`git add "${p}"`);
+                  const status = execSync("git status --porcelain").toString().trim();
+                  if (status) {
+                    const msg = (result.commitMessage || "Actualización vía Bot").replace(/"/g, "'");
+                    execSync(`git commit -m "${msg}"`);
+                    execSync("git push");
+                    const sha = execSync("git rev-parse --short HEAD").toString().trim();
+                    replyMsg += `\n✅ Cambios publicados (Commit: ${sha})\nArchivos editados: ${updatedList.join(", ")}`;
+                  }
+                }
+              }
+
+              fs.writeFileSync("respuesta.txt", replyMsg);
+              if (process.env.EVENT_NAME === "repository_dispatch" && process.env.CHAT_ID) {
+                await sendTelegram(process.env.CHAT_ID, replyMsg);
+                for (const p of updatedList) {
+                  if (p.toLowerCase().endsWith(".html")) {
+                    await sendTelegramDocument(process.env.CHAT_ID, p);
+                  }
+                }
+              }
+            } catch (err) {
+              const errMsg = `⚠️ Error: ${err.message}`;
+              fs.writeFileSync("respuesta.txt", errMsg);
+              if (process.env.EVENT_NAME === "repository_dispatch" && process.env.CHAT_ID) {
+                await sendTelegram(process.env.CHAT_ID, errMsg);
+              }
+            }
+          }
+
+          main();
+          EOF
+
+          node agente.mjs
+          rm -f agente.mjs
+          if [ "$EVENT_NAME" != "repository_dispatch" ] && [ -n "$ISSUE_NUMBER" ]; then
+            gh issue comment "$ISSUE_NUMBER" --body-file respuesta.txt
+          fi
