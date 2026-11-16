@@ -78,6 +78,7 @@ function speakText(text, onEnd) {
     return;
   }
   speechSynthesis.cancel();
+  if (typeof pauseChapterAudio === 'function') pauseChapterAudio();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'es-ES';
   u.rate = 0.95;
@@ -163,6 +164,274 @@ if (window.speechSynthesis) {
   AUDIO.preferredVoice = getSpanishVoice();
 }
 
+/* ========== Audio grabado por capítulo (HTML5) ==========
+ * Ruta: audio/<version>/<libro-2d>/<capitulo-3d>.mp3
+ * Ejemplo: audio/nvi/63/001.mp3  (2 Juan 1, audio NVI)
+ * La carpeta de audio la elige AUDIO_CONFIG.version (por defecto nvi),
+ * no el selector de texto (STATE.currentVersion).
+ * Sidecar opcional con tiempos por versículo: .../003.json
+ * { "verses": [{ "number": 1, "start": 0.0, "end": 4.2 }] }
+ * Para alojar fuera del repo, cambia AUDIO_CONFIG.baseUrl
+ * a una URL absoluta (Archive.org, GitHub Releases, etc.).
+ */
+const AUDIO_CONFIG = {
+  baseUrl: 'audio',
+  // Carpeta de audio independiente del texto (el selector de versión no la cambia).
+  version: 'nvi',
+  versionFolders: {
+    rvr1909: 'rvr1909',
+    Spanish1960Bible: 'rvr1960',
+    SpanishNVIBible: 'nvi',
+    nvi: 'nvi',
+    SpanishTLABible: 'tla',
+    SpanishLBLABible: 'lbla'
+  }
+};
+
+const AUDIO_VERSION_STORAGE = 'bv-audio-version';
+
+function resolveAudioVersion(key) {
+  const raw = String(key || AUDIO_CONFIG.version || 'nvi');
+  return AUDIO_CONFIG.versionFolders[raw] || raw || 'nvi';
+}
+
+function currentAudioVersion() {
+  return resolveAudioVersion(AUDIO_CONFIG.version);
+}
+
+function setAudioVersion(versionKey) {
+  AUDIO_CONFIG.version = resolveAudioVersion(versionKey);
+  try { localStorage.setItem(AUDIO_VERSION_STORAGE, AUDIO_CONFIG.version); } catch (err) { /* ignore */ }
+  const sel = document.getElementById('select-audio-version');
+  if (sel && sel.value !== AUDIO_CONFIG.version) sel.value = AUDIO_CONFIG.version;
+  if (STATE.view === 'verses' && STATE.currentBook && STATE.currentChapter) {
+    syncChapterAudio(STATE.currentBook, STATE.currentChapter);
+  }
+}
+
+function initAudioVersion() {
+  let saved = null;
+  try { saved = localStorage.getItem(AUDIO_VERSION_STORAGE); } catch (err) { saved = null; }
+  AUDIO_CONFIG.version = resolveAudioVersion(saved || AUDIO_CONFIG.version || 'nvi');
+  const sel = document.getElementById('select-audio-version');
+  if (sel) sel.value = AUDIO_CONFIG.version;
+}
+
+const CHAPTER_AUDIO = {
+  cues: [],
+  token: 0,
+  seeking: false,
+  eventsBound: false
+};
+
+function padBook(n) { return String(n).padStart(2, '0'); }
+function padChapter(n) { return String(n).padStart(3, '0'); }
+
+function chapterAudioPaths(version, bookNum, chapNum) {
+  const base = String(AUDIO_CONFIG.baseUrl || 'audio').replace(/\/$/, '');
+  const book = padBook(bookNum);
+  const chap = padChapter(chapNum);
+  return {
+    mp3: `${base}/${version}/${book}/${chap}.mp3`,
+    cues: `${base}/${version}/${book}/${chap}.json`
+  };
+}
+
+function formatAudioTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  const s = Math.floor(seconds);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = String(s % 60).padStart(2, '0');
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
+}
+
+function hideChapterAudioPlayer() {
+  const player = document.getElementById('chapter-audio-player');
+  const audio = document.getElementById('chapter-audio');
+  if (audio) {
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+  }
+  CHAPTER_AUDIO.cues = [];
+  clearVerseAudioSync();
+  if (player) {
+    player.hidden = true;
+    player.classList.add('hidden');
+  }
+  updateChapterAudioPlayUI(false);
+}
+
+function updateChapterAudioPlayUI(isPlaying) {
+  const btn = document.getElementById('btn-chapter-audio-play');
+  if (!btn) return;
+  btn.innerHTML = isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+  btn.setAttribute('aria-label', isPlaying ? 'Pausar audio del capítulo' : 'Reproducir audio del capítulo');
+}
+
+function pauseChapterAudio() {
+  const audio = document.getElementById('chapter-audio');
+  if (audio && !audio.paused) audio.pause();
+  updateChapterAudioPlayUI(false);
+}
+
+function clearVerseAudioSync() {
+  document.querySelectorAll('.verse.audio-synced').forEach(el => el.classList.remove('audio-synced'));
+}
+
+function syncVerseHighlight(currentTime) {
+  if (!CHAPTER_AUDIO.cues.length) return;
+  const cue = CHAPTER_AUDIO.cues.find(c => {
+    const start = Number(c.start);
+    const end = Number(c.end);
+    return currentTime >= start && (Number.isFinite(end) ? currentTime < end : true);
+  });
+  document.querySelectorAll('.verse.audio-synced').forEach(el => el.classList.remove('audio-synced'));
+  if (!cue) return;
+  const el = document.querySelector(`.verse[data-verse="${cue.number}"]`);
+  if (el) {
+    el.classList.add('audio-synced');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+async function checkAudioAvailable(url) {
+  try {
+    const res = await fetch(url, { method: 'HEAD' });
+    if (res.ok) return true;
+    if (res.status === 405 || res.status === 501) return null;
+    return false;
+  } catch (err) {
+    return null;
+  }
+}
+
+async function loadCueSheet(url, token) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok || token !== CHAPTER_AUDIO.token) return;
+    const data = await res.json();
+    const verses = Array.isArray(data) ? data : (data.verses || []);
+    CHAPTER_AUDIO.cues = verses.filter(v => v && Number.isFinite(Number(v.number)) && Number.isFinite(Number(v.start)));
+  } catch (err) {
+    CHAPTER_AUDIO.cues = [];
+  }
+}
+
+function showChapterAudioPlayer() {
+  const player = document.getElementById('chapter-audio-player');
+  if (!player) return;
+  player.hidden = false;
+  player.classList.remove('hidden');
+}
+
+async function syncChapterAudio(book, chapter) {
+  const audio = document.getElementById('chapter-audio');
+  if (!audio || !book || !chapter) {
+    hideChapterAudioPlayer();
+    return;
+  }
+  const token = ++CHAPTER_AUDIO.token;
+  hideChapterAudioPlayer();
+  const version = currentAudioVersion();
+  const paths = chapterAudioPaths(version, book.number, chapter.number);
+  const available = await checkAudioAvailable(paths.mp3);
+  if (token !== CHAPTER_AUDIO.token) return;
+
+  const attachAndShow = () => {
+    if (token !== CHAPTER_AUDIO.token) return;
+    audio.src = paths.mp3;
+    showChapterAudioPlayer();
+    loadCueSheet(paths.cues, token);
+  };
+
+  if (available === true) {
+    attachAndShow();
+    return;
+  }
+  if (available === false) return;
+
+  const onReady = () => {
+    audio.removeEventListener('loadedmetadata', onReady);
+    audio.removeEventListener('error', onErr);
+    if (token !== CHAPTER_AUDIO.token) return;
+    showChapterAudioPlayer();
+    loadCueSheet(paths.cues, token);
+  };
+  const onErr = () => {
+    audio.removeEventListener('loadedmetadata', onReady);
+    audio.removeEventListener('error', onErr);
+    if (token !== CHAPTER_AUDIO.token) return;
+    hideChapterAudioPlayer();
+  };
+  audio.addEventListener('loadedmetadata', onReady);
+  audio.addEventListener('error', onErr);
+  audio.src = paths.mp3;
+}
+
+function bindChapterAudioEvents() {
+  if (CHAPTER_AUDIO.eventsBound) return;
+  const audio = document.getElementById('chapter-audio');
+  const playBtn = document.getElementById('btn-chapter-audio-play');
+  const seek = document.getElementById('chapter-audio-seek');
+  const currentEl = document.getElementById('chapter-audio-current');
+  const durationEl = document.getElementById('chapter-audio-duration');
+  if (!audio) return;
+  CHAPTER_AUDIO.eventsBound = true;
+
+  const refreshTimes = () => {
+    if (currentEl) currentEl.textContent = formatAudioTime(audio.currentTime);
+    if (durationEl) durationEl.textContent = formatAudioTime(audio.duration);
+    if (seek && !CHAPTER_AUDIO.seeking && Number.isFinite(audio.duration)) {
+      seek.max = audio.duration;
+      seek.value = audio.currentTime;
+    }
+  };
+
+  audio.addEventListener('play', () => {
+    stopAudio();
+    updateChapterAudioPlayUI(true);
+  });
+  audio.addEventListener('pause', () => updateChapterAudioPlayUI(false));
+  audio.addEventListener('ended', () => {
+    updateChapterAudioPlayUI(false);
+    clearVerseAudioSync();
+  });
+  audio.addEventListener('timeupdate', () => {
+    refreshTimes();
+    syncVerseHighlight(audio.currentTime);
+  });
+  audio.addEventListener('loadedmetadata', refreshTimes);
+
+  if (playBtn) {
+    playBtn.addEventListener('click', () => {
+      if (!audio.src) return;
+      if (audio.paused) {
+        stopAudio();
+        audio.play().catch(() => updateChapterAudioPlayUI(false));
+      } else {
+        audio.pause();
+      }
+    });
+  }
+  if (seek) {
+    seek.addEventListener('input', () => {
+      CHAPTER_AUDIO.seeking = true;
+      if (currentEl) currentEl.textContent = formatAudioTime(Number(seek.value));
+    });
+    seek.addEventListener('change', () => {
+      audio.currentTime = Number(seek.value) || 0;
+      CHAPTER_AUDIO.seeking = false;
+    });
+  }
+  const audioVersionSel = document.getElementById('select-audio-version');
+  if (audioVersionSel) {
+    audioVersionSel.addEventListener('change', (e) => setAudioVersion(e.target.value));
+  }
+}
+
+
 const DOM = {
   loading: document.getElementById('loading'),
   headerTitle: document.getElementById('header-title'),
@@ -204,7 +473,11 @@ const DOM = {
   modalBookmarks: document.getElementById('modal-bookmarks'),
   closeBookmarks: document.getElementById('close-bookmarks'),
   bookmarksList: document.getElementById('bookmarks-list'),
-  footerVersion: document.getElementById('footer-version')
+  footerVersion: document.getElementById('footer-version'),
+  chapterAudioPlayer: document.getElementById('chapter-audio-player'),
+  chapterAudio: document.getElementById('chapter-audio'),
+  btnChapterAudioPlay: document.getElementById('btn-chapter-audio-play'),
+  chapterAudioSeek: document.getElementById('chapter-audio-seek')
 };
 
 const DB_NAME = 'BibliaVivienteDB';
@@ -361,6 +634,7 @@ function renderVerses(book, chapter) {
     STATE.history = { bookNumber: book.number, bookName: book.name, chapterNumber: chapter.number };
     localStorage.setItem('bv-history', JSON.stringify(STATE.history));
     updateContinueReadingCard();
+    syncChapterAudio(book, chapter);
   } catch (err) { console.error('renderVerses:', err); }
 }
 
@@ -384,6 +658,7 @@ function showView(view) {
     if (DOM.viewBooks) DOM.viewBooks.classList.add('hidden');
     if (DOM.viewChapters) DOM.viewChapters.classList.add('hidden');
     if (DOM.viewVerses) DOM.viewVerses.classList.add('hidden');
+    if (view !== 'verses') pauseChapterAudio();
     if (view === 'books') {
       if (DOM.viewBooks) DOM.viewBooks.classList.remove('hidden');
       if (DOM.btnBack) DOM.btnBack.classList.add('hidden');
@@ -451,6 +726,7 @@ function renderBookmarksModal() {
 }
 
 function initEvents() {
+  bindChapterAudioEvents();
   if (DOM.selectVersion) DOM.selectVersion.addEventListener('change', (e) => loadVersion(e.target.value));
   if (DOM.btnTheme) DOM.btnTheme.addEventListener('click', () => {
     const isDark = document.documentElement.classList.toggle('dark');
@@ -578,6 +854,7 @@ async function init() {
       if (!DOM[key]) throw new Error('Falta el elemento DOM: ' + key + '. Revisa index.html');
     }
     initEvents();
+    initAudioVersion();
     await loadVersion('rvr1909');
   } catch (err) {
     console.error('Error en init:', err);

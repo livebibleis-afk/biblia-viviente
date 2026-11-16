@@ -133,10 +133,33 @@
     <section id="view-verses" class="view hidden space-y-6">
       <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
         <h2 id="verses-chapter-title" class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white"></h2>
-        <button id="btn-audio" class="px-4 py-2 rounded-xl bg-indigo-50 dark:bg-white/5 border border-indigo-200 dark:border-white/10 text-indigo-600 dark:text-indigo-400 font-semibold text-xs flex items-center gap-2 hover:bg-indigo-100 transition-colors">
+        <button id="btn-audio" class="px-4 py-2 rounded-xl bg-indigo-50 dark:bg-white/5 border border-indigo-200 dark:border-white/10 text-indigo-600 dark:text-indigo-400 font-semibold text-xs flex items-center gap-2 hover:bg-indigo-100 transition-colors" title="Leer en voz alta con el navegador">
           <i class="fa-solid fa-volume-high"></i>
-          <span>Escuchar</span>
+          <span>Voz del sistema</span>
         </button>
+      </div>
+      <div id="chapter-audio-player" class="chapter-audio-player hidden" hidden>
+        <audio id="chapter-audio" preload="metadata"></audio>
+        <button type="button" id="btn-chapter-audio-play" class="chapter-audio-play" aria-label="Reproducir audio del capítulo">
+          <i class="fa-solid fa-play"></i>
+        </button>
+        <div class="chapter-audio-meta">
+          <div class="chapter-audio-label-row">
+            <div class="chapter-audio-label">Audio del capítulo</div>
+            <label class="chapter-audio-version">
+              <span class="sr-only">Versión de audio</span>
+              <select id="select-audio-version" aria-label="Versión de audio">
+                <option value="nvi" selected>NVI</option>
+                <option value="rvr1909">RVR 1909</option>
+              </select>
+            </label>
+          </div>
+          <input type="range" id="chapter-audio-seek" class="chapter-audio-seek" min="0" max="0" value="0" step="0.1" aria-label="Posición del audio" />
+          <div class="chapter-audio-times">
+            <span id="chapter-audio-current">0:00</span>
+            <span id="chapter-audio-duration">0:00</span>
+          </div>
+        </div>
       </div>
       <div id="verses-content" class="verses-content"></div>
       <div id="chapter-nav" class="chapter-nav">
@@ -206,5 +229,10 @@
   </footer>
 
   <script src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    }
+  </script>
 </body>
 </html>
