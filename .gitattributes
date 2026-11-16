@@ -1,0 +1,4 @@
+# Los MP3 de muestra (pocos capítulos, todos < 100 MB) van como archivos
+# normales de Git. No usamos Git LFS en este repo: si el remoto no tiene
+# LFS, los punteros romperían la reproducción. Para una Biblia completa
+# usa alojamiento externo (ver audio/README.md).
