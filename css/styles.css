@@ -280,11 +280,94 @@ button:focus-visible, input:focus-visible {
 .loading p { font-size: 0.9rem; color: var(--text-muted); }
 .empty-state { text-align: center; padding: 48px 16px; color: var(--text-muted); font-size: 0.95rem; }
 
+
+.chapter-audio-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.chapter-audio-player.hidden { display: none !important; }
+.chapter-audio-play {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  transition: transform var(--transition), background var(--transition);
+}
+.chapter-audio-play:hover { background: var(--accent-hover); }
+.chapter-audio-play:active { transform: scale(0.96); }
+.chapter-audio-meta { flex: 1; min-width: 0; }
+.chapter-audio-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.chapter-audio-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.chapter-audio-version select {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.chapter-audio-seek {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+  height: 6px;
+}
+.chapter-audio-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.verse.audio-synced {
+  background: rgba(99, 102, 241, 0.12);
+  border-left: 3px solid #6366f1;
+  padding-left: 0.65rem;
+  border-radius: 0.5rem;
+}
+
 @media (min-width: 480px) {
   .books-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 }
 @supports (-webkit-touch-callout: none) {
-  .book-card, .chapter-btn, .btn-nav, .verse-audio-btn {
+  .book-card, .chapter-btn, .btn-nav, .verse-audio-btn, .chapter-audio-play {
     -webkit-tap-highlight-color: transparent;
   }
 }

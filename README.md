@@ -28,6 +28,7 @@ Versión: **Reina-Valera 1909** (dominio público)
 | **Navegación rápida** | Anterior / Siguiente capítulo + botón de volver |
 | **Buscador** | Filtra libros por nombre al instante |
 | **Filtros** | Todos · Antiguo Testamento · Nuevo Testamento |
+| **Audio del capítulo** | Reproduce `audio/<versión>/<libro>/<capítulo>.mp3` si el archivo existe |
 | **Sin dependencias** | Solo HTML, CSS y JavaScript moderno |
 
 ---
@@ -43,6 +44,10 @@ biblia-viviente/
 │   └── app.js          # Lógica de navegación y renderizado
 ├── data/
 │   └── rvr1909.json    # Biblia completa (Reina-Valera 1909)
+├── audio/
+│   ├── nvi/            # Muestras NVI (2 Juan, 3 Juan, Judas)
+│   └── rvr1909/        # MP3 por libro/capítulo (ver audio/README.md)
+├── sw.js               # Caché offline del audio reproducido
 ├── .nojekyll           # Necesario para GitHub Pages
 └── README.md
 ```
@@ -76,6 +81,15 @@ Abre: [http://localhost:8080](http://localhost:8080)
 
 ---
 
+
+## Audio por capítulo
+
+La app busca un MP3 según la **versión de audio** (`AUDIO_CONFIG.version`, por defecto `nvi`), el libro y el capítulo abiertos. El texto puede seguir siendo RVR 1909:
+
+`audio/nvi/63/001.mp3` → 2 Juan 1 (audio NVI)
+
+Si el archivo no está, el reproductor se oculta y no se rompe la lectura. La guía de nombres y alojamiento externo está en [`audio/README.md`](audio/README.md).
+
 ## Datos bíblicos
 
 | Campo | Valor |
@@ -89,7 +103,7 @@ Abre: [http://localhost:8080](http://localhost:8080)
 
 ## Roadmap
 
-- [ ] PWA (instalable + funcionamiento offline)
+- [ ] PWA instalable (icono + manifest; el SW ya cachea el audio reproducido)
 - [ ] Más versiones (NVI, LBLA, VBL…)
 - [ ] Buscador de texto completo
 - [ ] Marcadores y notas personales
