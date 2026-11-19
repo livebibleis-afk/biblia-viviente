@@ -5,3 +5,9 @@ node_modules/
 .idea/
 dist/
 *.local
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+data/podcast/*.mp3
+data/podcast/cookies.txt

@@ -1,0 +1,7 @@
+mutagen>=1.47.0
+yt-dlp>=2024.8.6
+
+# Opcional. Solo hace falta con --transcribe (lento; baja un modelo la primera vez):
+# faster-whisper>=1.0.0
+# La carátula se regenera con --make-cover si Pillow está instalado:
+# pillow>=10.0.0

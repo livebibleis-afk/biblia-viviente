@@ -34,6 +34,7 @@
     };
   </script>
   <link rel="stylesheet" href="css/styles.css" />
+  <link rel="alternate" type="application/rss+xml" title="Podcast · Dr. Armando Alducin F." href="feed.xml" />
 </head>
 <body class="bg-slate-50 dark:bg-[#070a13] text-slate-800 dark:text-slate-100 antialiased h-full flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
 
@@ -60,7 +61,7 @@
               <option value="SpanishTLABible" class="dark:bg-[#070a13]">Traducción en Lenguaje Actual (TLA)</option>
               <option value="SpanishLBLABible" class="dark:bg-[#070a13]">La Biblia de las Américas (LBLA)</option>
             </select>
-            <span class="text-slate-400 text-xs">•</span>
+            <span id="header-version-dot" class="text-slate-400 text-xs">•</span>
             <span id="current-reference-badge" class="text-xs font-medium text-slate-500 dark:text-slate-400 truncate max-w-[120px] sm:max-w-xs">Selecciona un libro</span>
           </div>
         </div>
@@ -114,6 +115,15 @@
           <i class="fa-solid fa-arrow-right"></i>
         </div>
       </div>
+      <a href="#podcast" id="btn-open-podcast" class="podcast-entry">
+        <span class="podcast-entry-icon" aria-hidden="true"><i class="fa-solid fa-podcast"></i></span>
+        <span class="podcast-entry-copy">
+          <span class="podcast-entry-kicker">Podcast</span>
+          <span class="podcast-entry-title">Dr. Armando Alducin F.</span>
+          <span class="podcast-entry-sub">Enseñanzas por serie, con reproductor y RSS<span id="podcast-entry-count"></span></span>
+        </span>
+        <i class="fa-solid fa-chevron-right podcast-entry-chevron" aria-hidden="true"></i>
+      </a>
       <div class="search-bar">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
         <input id="search-books" type="text" placeholder="Filtrar libros por nombre..." aria-label="Filtrar libros" />
@@ -168,7 +178,47 @@
         <button id="btn-next-chapter" class="btn-nav">Siguiente <i class="fa-solid fa-chevron-right text-xs"></i></button>
       </div>
     </section>
+
+    <section id="view-podcast" class="view hidden" aria-label="Podcast">
+      <div class="podcast-hero">
+        <img id="podcast-cover" src="data/podcast/cover.jpg" alt="Carátula @BibliaViviente Dr. AAF" width="112" height="112" />
+        <div class="podcast-hero-text">
+          <p class="podcast-kicker">Podcast</p>
+          <h2 id="podcast-heading">Dr. Armando Alducin F.</h2>
+          <p id="podcast-desc" class="podcast-desc">Enseñanzas publicadas por @BibliaViviente.</p>
+          <a id="podcast-rss" class="podcast-rss" href="feed.xml">
+            <i class="fa-solid fa-rss" aria-hidden="true"></i> Suscribirse por RSS
+          </a>
+        </div>
+      </div>
+      <div class="search-bar">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input id="search-podcast" type="search" placeholder="Buscar por título, serie, tema o cita…" aria-label="Buscar episodios" autocomplete="off" />
+      </div>
+      <div id="podcast-filters" class="podcast-filters" aria-label="Filtrar por serie"></div>
+      <div id="podcast-list" class="podcast-list" aria-live="polite">
+        <p class="empty-state">Cargando episodios…</p>
+      </div>
+    </section>
   </main>
+
+  <div id="podcast-now" class="podcast-now hidden" hidden>
+    <audio id="podcast-audio" preload="none"></audio>
+    <div class="podcast-now-row">
+      <button type="button" id="podcast-now-play" class="chapter-audio-play" aria-label="Reproducir">
+        <i class="fa-solid fa-play"></i>
+      </button>
+      <div class="podcast-now-meta">
+        <div id="podcast-now-title" class="podcast-now-title">Elige un episodio</div>
+        <div id="podcast-now-series" class="podcast-now-series"></div>
+        <input type="range" id="podcast-seek" class="chapter-audio-seek" min="0" max="0" value="0" step="0.1" aria-label="Posición del episodio" />
+        <div class="chapter-audio-times">
+          <span id="podcast-current">0:00</span>
+          <span id="podcast-duration">0:00</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div id="verse-floating-bar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 dark:bg-[#0c1222]/95 backdrop-blur-xl border border-white/15 px-5 py-3 rounded-2xl shadow-2xl z-50 flex items-center gap-4 text-white">
     <button id="action-copy" class="flex items-center gap-1.5 text-xs font-semibold hover:text-indigo-400 transition-colors" title="Copiar">
@@ -225,10 +275,11 @@
   </div>
 
   <footer class="border-t border-slate-200 dark:border-white/5 py-6 text-center text-xs text-slate-400">
-    <p>Biblia Viviente • <span id="footer-version">Reina-Valera 1909</span></p>
+    <p>Biblia Viviente • <span id="footer-version">Reina-Valera 1909</span> • <a id="footer-podcast" href="#podcast">Podcast</a></p>
   </footer>
 
   <script src="js/app.js"></script>
+  <script src="js/podcast.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(function () {});

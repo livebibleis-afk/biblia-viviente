@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "episodes": {
+    "DAAF_Armando_Alducin_F_RESA_01.mp3": {
+      "status": "sin_fuente",
+      "error": "",
+      "audio_url": "",
+      "duration_seconds": null,
+      "bytes": null,
+      "sha256": "",
+      "source_url": "",
+      "processed_at": null,
+      "chapters": []
+    },
+    "DAAF_Armando_Alducin_F_DYEM_01.mp3": {
+      "status": "publicado",
+      "error": "",
+      "audio_url": "https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DYEM_01.mp3",
+      "duration_seconds": 3296.6,
+      "bytes": 52818484,
+      "sha256": "4aed1a70db53dd7c699c9076889276d5601162a63e6b27c542a08808df6221ed",
+      "source_url": "https://youtu.be/3McxO3SnKHI",
+      "processed_at": "2026-11-19T19:36:43+00:00",
+      "chapters": [],
+      "upload_date": "2015-07-14"
+    }
+  },
+  "release_tag": "podcast",
+  "audio_base_url": "https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast"
+}
