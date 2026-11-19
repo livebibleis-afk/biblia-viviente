@@ -433,8 +433,8 @@ def write_id3(path: Path, episode: dict, cover: Path | None) -> None:
     tags.add(TIT2(encoding=3, text=episode["titulo"]))
     tags.add(TPE1(encoding=3, text=episode["artista"]))
     tags.add(TALB(encoding=3, text=episode["album"]))
-    if episode.get("anio"):
-        tags.add(TDRC(encoding=3, text=str(episode["anio"])))
+    if episode.get("fecha") or episode.get("anio"):
+        tags.add(TDRC(encoding=3, text=str(episode.get("fecha") or episode["anio"])))
     tags.add(TRCK(encoding=3, text=str(parse_track(episode.get("pista", "1")))))
     tags.add(TCON(encoding=3, text=episode["genero"]))
     if episode.get("comentarios"):
@@ -542,6 +542,39 @@ def download_source(url: str, dest_dir: Path, cookies: str = "") -> Path:
     if not files:
         raise DownloadError(friendly_download_error("yt-dlp terminó sin archivo."))
     return max(files, key=lambda item: item.stat().st_mtime)
+
+
+def fetch_upload_date(url: str, cookies: str = "") -> str:
+    """Fecha de subida del video (YYYY-MM-DD) según yt-dlp, o "" si no se puede."""
+    if not url or not url.startswith("http"):
+        return ""
+    binary = find_tool("yt-dlp")
+    if not binary:
+        return ""
+    command = [binary, "--skip-download", "--no-playlist", "--print", "%(upload_date)s", url]
+    if cookies:
+        command[1:1] = ["--cookies", cookies]
+    completed = run_command(command)
+    value = (completed.stdout or "").strip().splitlines()
+    value = value[-1] if value else ""
+    if not re.fullmatch(r"\d{8}", value):
+        return ""
+    return f"{value[:4]}-{value[4:6]}-{value[6:]}"
+
+
+def disco_from_date(date: str) -> str:
+    """«Disco no» de 6 dígitos: AADDMM (la plantilla usa AAAADDMM, p. ej. 20151407 = 14/07/2015)."""
+    year, month, day = date.split("-")
+    return f"{year[2:]}{day}{month}"
+
+
+def apply_upload_date(episode: dict, entry: dict, date: str) -> None:
+    if not date:
+        return
+    entry["upload_date"] = date
+    episode["fecha"] = date
+    episode["anio"] = date[:4]
+    episode["disco"] = disco_from_date(date)
 
 
 def convert_to_mp3(source: Path, dest: Path) -> None:
@@ -813,7 +846,8 @@ def catalog_episode(episode: dict, entry: dict, cover_rel: str) -> dict:
         "series": episode["serie"],
         "series_code": episode["codigo_serie"],
         "track": parse_track(episode.get("pista", "1")),
-        "year": parse_year(episode.get("anio", "")) ,
+        "year": parse_year((entry.get("upload_date") or "")[:4] or episode.get("anio", "")),
+        "date": entry.get("upload_date") or None,
         "duration": round(duration, 1) if isinstance(duration, (int, float)) else None,
         "audio_url": url,
         "cover": cover_rel,
@@ -899,7 +933,7 @@ def build_feed(catalog: dict, path: Path, site: str, cover_url: str, owner_email
         length = int(lengths.get(item["file"]) or 0)
         if item.get("audio_url") and item.get("duration") and length > 0:
             published.append((item, length))
-    published.sort(key=lambda pair: (pair[0].get("year") or 0, pair[0].get("track") or 0), reverse=True)
+    published.sort(key=lambda pair: (pair[0].get("date") or str(pair[0].get("year") or 0), pair[0].get("track") or 0), reverse=True)
     for item, length in published:
         node = ET.SubElement(channel, "item")
         ET.SubElement(node, "title").text = item["title"]
@@ -922,8 +956,11 @@ def build_feed(catalog: dict, path: Path, site: str, cover_url: str, owner_email
             {"url": item["audio_url"], "length": str(length), "type": "audio/mpeg"},
         )
         ET.SubElement(node, "guid", {"isPermaLink": "false"}).text = item["file"]
-        year = item.get("year") or datetime.now(timezone.utc).year
-        ET.SubElement(node, "pubDate").text = format_datetime(datetime(int(year), 1, 1, tzinfo=timezone.utc))
+        if item.get("date"):
+            when = datetime.strptime(item["date"], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        else:
+            when = datetime(int(item.get("year") or datetime.now(timezone.utc).year), 1, 1, tzinfo=timezone.utc)
+        ET.SubElement(node, "pubDate").text = format_datetime(when)
         ET.SubElement(node, qname(ITUNES, "duration")).text = hms(item.get("duration"))
         ET.SubElement(node, "link").text = item.get("source_url") or podcast["site"]
 
@@ -1047,6 +1084,7 @@ def process_episode(episode, entry, args, work_dir: Path, cover: Path) -> dict:
             convert_to_mp3(source, target)
             result["detail"] = "Audio descargado y convertido a MP3."
 
+        apply_upload_date(episode, entry, fetch_upload_date(episode.get("source_url", ""), args.cookies))
         write_id3(target, episode, episode_cover(episode, cover))
         duration = probe_duration(target)
         entry["sha256"] = sha256_file(target)
@@ -1225,6 +1263,8 @@ def run(args: argparse.Namespace) -> int:
                 if episode.get("_chapters"):
                     entry["chapters"] = episode["_chapters"]
                 print(f"[ok] Sugerencias de transcripción para {episode['archivo']} (revisar el CSV).")
+        if entry.get("upload_date") and episode.get("fecha"):
+            manifest_changed = True  # año y «Disco no» vienen de la fecha de YouTube
         results.append(result)
         if result.get("upload_error"):
             upload_errors = True

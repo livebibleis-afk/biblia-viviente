@@ -112,7 +112,7 @@
     const meta = [
       episode.series,
       'Pista ' + String(episode.track || 1).padStart(2, '0'),
-      episode.year || '',
+      episode.date ? episode.date.split('-').reverse().join('/') : (episode.year || ''),
       duration
     ].filter(Boolean).join(' · ');
     const topics = (episode.topics || []).map((topic) => `<span class="podcast-chip">${escapeHtml(topic)}</span>`).join('');

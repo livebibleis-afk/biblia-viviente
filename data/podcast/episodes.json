@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-19T19:32:06+00:00",
+  "updated": "2026-11-19T19:36:52+00:00",
   "podcast": {
     "title": "@BibliaViviente · Dr. Armando Alducin F.",
     "author": "Dr. Armando Alducin F.",
@@ -18,6 +18,7 @@
       "series_code": "RESA",
       "track": 1,
       "year": 2021,
+      "date": null,
       "duration": null,
       "audio_url": null,
       "cover": "data/podcast/cover.jpg",
@@ -38,6 +39,7 @@
       "series_code": "DYEM",
       "track": 1,
       "year": 2015,
+      "date": "2015-07-14",
       "duration": 3296.6,
       "audio_url": "https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DYEM_01.mp3",
       "cover": "data/podcast/cover.jpg",
