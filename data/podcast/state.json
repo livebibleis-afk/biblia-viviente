@@ -13,14 +13,14 @@
       "chapters": []
     },
     "DAAF_Armando_Alducin_F_DYEM_01.mp3": {
-      "status": "pendiente",
+      "status": "publicado",
       "error": "",
-      "audio_url": "",
-      "duration_seconds": null,
-      "bytes": null,
-      "sha256": "",
+      "audio_url": "https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DYEM_01.mp3",
+      "duration_seconds": 3296.6,
+      "bytes": 52818480,
+      "sha256": "914e16d27d9ff26765667d68deec300c2c033c29019f483fd7b0d2bf247de9e2",
       "source_url": "https://youtu.be/3McxO3SnKHI",
-      "processed_at": null,
+      "processed_at": "2026-11-19T19:31:59+00:00",
       "chapters": []
     }
   },
