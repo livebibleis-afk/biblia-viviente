@@ -1,0 +1,113 @@
+name: Podcast
+
+on:
+  workflow_dispatch:
+    inputs:
+      transcribe:
+        description: "Transcribir con faster-whisper (lento y opcional)"
+        type: boolean
+        default: false
+      force:
+        description: "Volver a procesar episodios que ya están en el release"
+        type: boolean
+        default: false
+      only:
+        description: "Solo este archivo, por ejemplo DAAF_Armando_Alducin_F_DYEM_01.mp3"
+        required: false
+        type: string
+      sheet_url:
+        description: "URL CSV de Google Sheets. Vacío = variable PODCAST_SHEET_CSV_URL o el CSV del repo"
+        required: false
+        type: string
+  schedule:
+    # Lunes 08:00 UTC. Si no hay audio nuevo, el job no hace commit.
+    - cron: "0 8 * * 1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: podcast-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tools/podcast/requirements.txt
+
+      - name: Instalar ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Instalar dependencias
+        env:
+          TRANSCRIBE: ${{ inputs.transcribe }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/podcast/requirements.txt
+          if [ "$TRANSCRIBE" = "true" ]; then
+            python -m pip install "faster-whisper>=1.0.0"
+          fi
+
+      - name: Probar la herramienta
+        run: python tools/podcast/test_tag_podcast.py
+
+      - name: Etiquetar y publicar audio
+        id: tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PODCAST_SHEET_CSV_URL: ${{ vars.PODCAST_SHEET_CSV_URL }}
+          PODCAST_SITE_URL: ${{ vars.PODCAST_SITE_URL }}
+          PODCAST_AUDIO_BASE_URL: ${{ vars.PODCAST_AUDIO_BASE_URL }}
+          PODCAST_OWNER_EMAIL: ${{ vars.PODCAST_OWNER_EMAIL }}
+          PODCAST_RELEASE_TAG: ${{ vars.PODCAST_RELEASE_TAG }}
+          TRANSCRIBE: ${{ inputs.transcribe }}
+          FORCE: ${{ inputs.force }}
+          ONLY: ${{ inputs.only }}
+          SHEET_URL: ${{ inputs.sheet_url }}
+        run: |
+          set -eu
+          args=(--upload)
+          if [ "$TRANSCRIBE" = "true" ]; then
+            args+=(--transcribe)
+          fi
+          if [ "$FORCE" = "true" ]; then
+            args+=(--force)
+          fi
+          if [ -n "${ONLY:-}" ]; then
+            args+=(--only "$ONLY")
+          fi
+          if [ -n "${SHEET_URL:-}" ]; then
+            args+=(--sheet-url "$SHEET_URL")
+          fi
+          python tools/podcast/tag_podcast.py "${args[@]}"
+
+      - name: Guardar informe
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: podcast-report
+          path: dist/podcast/report.json
+          if-no-files-found: ignore
+
+      - name: Publicar metadatos (sin MP3)
+        if: success() || steps.tag.outcome == 'failure'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- data/podcast/episodes.csv data/podcast/episodes.json data/podcast/state.json feed.xml
+          if git diff --cached --quiet; then
+            echo "No hay metadatos nuevos."
+          else
+            git commit -m "podcast: actualiza catálogo y feed"
+            git push
+          fi

@@ -449,6 +449,7 @@ const DOM = {
   viewBooks: document.getElementById('view-books'),
   viewChapters: document.getElementById('view-chapters'),
   viewVerses: document.getElementById('view-verses'),
+  viewPodcast: document.getElementById('view-podcast'),
   continueReadingCard: document.getElementById('continue-reading-card'),
   continueTitle: document.getElementById('continue-title'),
   searchBooks: document.getElementById('search-books'),
@@ -658,7 +659,12 @@ function showView(view) {
     if (DOM.viewBooks) DOM.viewBooks.classList.add('hidden');
     if (DOM.viewChapters) DOM.viewChapters.classList.add('hidden');
     if (DOM.viewVerses) DOM.viewVerses.classList.add('hidden');
+    if (DOM.viewPodcast) DOM.viewPodcast.classList.add('hidden');
     if (view !== 'verses') pauseChapterAudio();
+    if (view !== 'podcast' && window.BibliaPodcast && window.BibliaPodcast.close) window.BibliaPodcast.close();
+    const versionDot = document.getElementById('header-version-dot');
+    if (DOM.selectVersion) DOM.selectVersion.classList.toggle('hidden', view === 'podcast');
+    if (versionDot) versionDot.classList.toggle('hidden', view === 'podcast');
     if (view === 'books') {
       if (DOM.viewBooks) DOM.viewBooks.classList.remove('hidden');
       if (DOM.btnBack) DOM.btnBack.classList.add('hidden');
@@ -674,6 +680,12 @@ function showView(view) {
       if (DOM.btnBack) DOM.btnBack.classList.remove('hidden');
       if (DOM.headerTitle) DOM.headerTitle.textContent = `${STATE.currentBook.name} ${STATE.currentChapter.number}`;
       if (DOM.currentReferenceBadge) DOM.currentReferenceBadge.textContent = STATE.bible.translation || '';
+    } else if (view === 'podcast') {
+      if (DOM.viewPodcast) DOM.viewPodcast.classList.remove('hidden');
+      if (DOM.btnBack) DOM.btnBack.classList.remove('hidden');
+      if (DOM.headerTitle) DOM.headerTitle.textContent = 'Podcast';
+      if (DOM.currentReferenceBadge) DOM.currentReferenceBadge.textContent = 'Dr. AAF';
+      if (window.BibliaPodcast && window.BibliaPodcast.onShow) window.BibliaPodcast.onShow();
     }
     window.scrollTo({ top: 0, behavior: 'instant' });
   } catch (err) { console.error('showView:', err); }
@@ -727,7 +739,10 @@ function renderBookmarksModal() {
 
 function initEvents() {
   bindChapterAudioEvents();
-  if (DOM.selectVersion) DOM.selectVersion.addEventListener('change', (e) => loadVersion(e.target.value));
+  if (DOM.selectVersion) DOM.selectVersion.addEventListener('change', (e) => {
+    if (location.hash === '#podcast') history.replaceState(null, '', location.pathname + location.search);
+    loadVersion(e.target.value);
+  });
   if (DOM.btnTheme) DOM.btnTheme.addEventListener('click', () => {
     const isDark = document.documentElement.classList.toggle('dark');
     localStorage.setItem('bv-theme', isDark ? 'dark' : 'light');
@@ -735,6 +750,14 @@ function initEvents() {
   if (DOM.btnBack) DOM.btnBack.addEventListener('click', () => {
     if (STATE.view === 'verses') showView('chapters');
     else if (STATE.view === 'chapters') showView('books');
+    else if (STATE.view === 'podcast') {
+      if (location.hash === '#podcast') location.hash = '';
+      else showView('books');
+    }
+  });
+  window.addEventListener('hashchange', () => {
+    if (location.hash === '#podcast') showView('podcast');
+    else if (STATE.view === 'podcast') showView('books');
   });
   if (DOM.continueReadingCard) DOM.continueReadingCard.addEventListener('click', () => {
     if (!STATE.history || !STATE.bible) return;
@@ -856,6 +879,7 @@ async function init() {
     initEvents();
     initAudioVersion();
     await loadVersion('rvr1909');
+    if (location.hash === '#podcast') showView('podcast');
   } catch (err) {
     console.error('Error en init:', err);
     const el = document.getElementById('loading') || document.body;

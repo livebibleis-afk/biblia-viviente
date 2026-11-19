@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
+  <channel>
+    <title>@BibliaViviente · Dr. Armando Alducin F.</title>
+    <link>https://livebibleis-afk.github.io/biblia-viviente/#podcast</link>
+    <language>es</language>
+    <description>Enseñanzas y reportajes del Dr. Armando Alducin F. Biblia App Lee.Oye.Ve — @BibliaViviente.</description>
+    <copyright>Dr. Armando Alducin F. · @BibliaViviente</copyright>
+    <lastBuildDate>Thu, 19 Nov 2026 17:45:32 +0000</lastBuildDate>
+    <atom:link href="https://livebibleis-afk.github.io/biblia-viviente/feed.xml" rel="self" type="application/rss+xml" />
+    <itunes:author>Dr. Armando Alducin F.</itunes:author>
+    <itunes:summary>Enseñanzas y reportajes del Dr. Armando Alducin F. Biblia App Lee.Oye.Ve — @BibliaViviente.</itunes:summary>
+    <itunes:explicit>false</itunes:explicit>
+    <itunes:type>episodic</itunes:type>
+    <itunes:image href="https://livebibleis-afk.github.io/biblia-viviente/data/podcast/cover.jpg" />
+    <itunes:owner>
+      <itunes:name>@BibliaViviente</itunes:name>
+    </itunes:owner>
+    <itunes:category text="Religion &amp; Spirituality">
+      <itunes:category text="Christianity" />
+    </itunes:category>
+    <image>
+      <url>https://livebibleis-afk.github.io/biblia-viviente/data/podcast/cover.jpg</url>
+      <title>@BibliaViviente · Dr. Armando Alducin F.</title>
+      <link>https://livebibleis-afk.github.io/biblia-viviente/#podcast</link>
+    </image>
+  </channel>
+</rss>
