@@ -372,6 +372,35 @@ button:focus-visible, input:focus-visible {
   }
 }
 /* Podcast — Dr. Armando Alducin F. */
+#podcast {
+  scroll-margin-top: calc(4.5rem + env(safe-area-inset-top, 0px));
+}
+.podcast-home {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.bible-home {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.bible-home-head { display: flex; flex-direction: column; gap: 2px; }
+.bible-kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.bible-home-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
 a.podcast-entry {
   display: flex;
   align-items: center;
