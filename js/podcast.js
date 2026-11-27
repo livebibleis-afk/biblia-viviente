@@ -211,13 +211,31 @@
     if (durationEl) durationEl.textContent = formatTime(episode.duration || audio.duration || 0);
   }
 
+  function audioMime(url) {
+    const path = (url || '').split('?')[0].toLowerCase();
+    if (path.endsWith('.opus')) return 'audio/ogg; codecs=opus';
+    if (path.endsWith('.ogg') || path.endsWith('.oga')) return 'audio/ogg';
+    if (path.endsWith('.m4a') || path.endsWith('.aac')) return 'audio/mp4';
+    return 'audio/mpeg';
+  }
+
+  function setEpisodeSource(url) {
+    audio.removeAttribute('src');
+    audio.querySelectorAll('source').forEach((el) => el.remove());
+    const source = document.createElement('source');
+    source.src = url;
+    source.type = audioMime(url);
+    audio.appendChild(source);
+    audio.load();
+  }
+
   function playEpisode(episode, startAt) {
     if (!episode || !episode.audio_url) return;
     if (typeof pauseChapterAudio === 'function') pauseChapterAudio();
     if (window.speechSynthesis) window.speechSynthesis.cancel();
-    const same = state.currentId === episode.id && audio.src;
+    const same = state.currentId === episode.id && (audio.currentSrc || audio.src);
     if (!same) {
-      audio.src = episode.audio_url;
+      setEpisodeSource(episode.audio_url);
       state.currentId = episode.id;
     }
     showNow(episode);

@@ -57,7 +57,7 @@ COLUMNS = [
 ]
 
 SPEAKER_PREFIX = "DAAF_Armando_Alducin_F"
-FILENAME_RE = re.compile(rf"^{re.escape(SPEAKER_PREFIX)}_[A-Z0-9]+_\d{{2}}\.mp3$")
+FILENAME_RE = re.compile(rf"^{re.escape(SPEAKER_PREFIX)}_[A-Z0-9]+_\d{{2}}\.(mp3|opus)$")
 
 DEFAULTS = {
     "artista": "Dr. Armando Alducin F.",
@@ -202,11 +202,25 @@ def split_list(value: str) -> list[str]:
     return found
 
 
+AUDIO_SUFFIXES = {".mp3", ".opus", ".ogg", ".m4a"}
+
+
+def enclosure_type(filename_or_url: str) -> str:
+    name = (filename_or_url or "").split("?", 1)[0].lower()
+    if name.endswith(".opus"):
+        return "audio/ogg; codecs=opus"
+    if name.endswith(".ogg") or name.endswith(".oga"):
+        return "audio/ogg"
+    if name.endswith(".m4a") or name.endswith(".aac"):
+        return "audio/mp4"
+    return "audio/mpeg"
+
+
 def safe_filename(name: str) -> str:
     base = Path(clean_text(name)).name
     if not base or base in {".", ".."} or "/" in name or "\\" in name:
         raise ValueError(f"Nombre de archivo no válido: {name!r}")
-    if not base.lower().endswith(".mp3"):
+    if Path(base).suffix.lower() not in AUDIO_SUFFIXES:
         base += ".mp3"
     return base
 
@@ -781,7 +795,7 @@ def filename_warnings(episode: dict) -> list[str]:
     warnings = []
     if not FILENAME_RE.match(episode["archivo"]):
         warnings.append(
-            f"{episode['archivo']} no sigue el patrón {SPEAKER_PREFIX}_CODIGO_01.mp3"
+            f"{episode['archivo']} no sigue el patrón {SPEAKER_PREFIX}_CODIGO_01.mp3 o .opus"
         )
     disco = episode.get("disco", "")
     if disco and not re.fullmatch(r"\d{6}", disco):
@@ -933,7 +947,7 @@ def build_feed(catalog: dict, path: Path, site: str, cover_url: str, owner_email
         length = int(lengths.get(item["file"]) or 0)
         if item.get("audio_url") and item.get("duration") and length > 0:
             published.append((item, length))
-    published.sort(key=lambda pair: (pair[0].get("date") or str(pair[0].get("year") or 0), pair[0].get("track") or 0), reverse=True)
+    published.sort(key=lambda pair: (pair[0].get("date") or (f"{pair[0]['year']}-01-01" if pair[0].get("year") else "9999-12-31"), pair[0].get("track") or 0), reverse=True)
     for item, length in published:
         node = ET.SubElement(channel, "item")
         ET.SubElement(node, "title").text = item["title"]
@@ -953,13 +967,15 @@ def build_feed(catalog: dict, path: Path, site: str, cover_url: str, owner_email
         ET.SubElement(
             node,
             "enclosure",
-            {"url": item["audio_url"], "length": str(length), "type": "audio/mpeg"},
+            {"url": item["audio_url"], "length": str(length), "type": enclosure_type(item.get("file") or item["audio_url"])},
         )
         ET.SubElement(node, "guid", {"isPermaLink": "false"}).text = item["file"]
         if item.get("date"):
             when = datetime.strptime(item["date"], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        elif item.get("year"):
+            when = datetime(int(item["year"]), 1, 1, tzinfo=timezone.utc)
         else:
-            when = datetime(int(item.get("year") or datetime.now(timezone.utc).year), 1, 1, tzinfo=timezone.utc)
+            when = datetime.now(timezone.utc)
         ET.SubElement(node, "pubDate").text = format_datetime(when)
         ET.SubElement(node, qname(ITUNES, "duration")).text = hms(item.get("duration"))
         ET.SubElement(node, "link").text = item.get("source_url") or podcast["site"]

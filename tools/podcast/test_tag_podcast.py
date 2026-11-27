@@ -43,10 +43,10 @@ def tone(path: Path, seconds: float = 1.2) -> None:
 
 
 class ManifestTests(unittest.TestCase):
-    def test_seed_has_only_the_two_sheet_episodes(self):
+    def test_manifest_includes_seed_and_desayunos(self):
         episodes = tp.read_manifest(ROOT / "data/podcast/episodes.csv")
-        self.assertEqual(len(episodes), 2)
-        first, second = episodes
+        self.assertEqual(len(episodes), 9)
+        first, second = episodes[0], episodes[1]
         self.assertEqual(first["archivo"], "DAAF_Armando_Alducin_F_RESA_01.mp3")
         self.assertEqual(first["titulo"], "Reportaje Especial Sobre Afganistan (Parte 01)")
         self.assertEqual(first["artista"], "Dr. Armando Alducin F.")
@@ -66,6 +66,16 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(second["source_url"], "https://youtu.be/3McxO3SnKHI")
         self.assertIn("Jeshua", second["comentarios"])
         self.assertIn("🇺🇲", second["comentarios"])
+        desa = [episode for episode in episodes if episode["codigo_serie"] == "DESA"]
+        self.assertEqual(len(desa), 7)
+        self.assertEqual(desa[0]["archivo"], "DAAF_Armando_Alducin_F_DESA_01.opus")
+        self.assertEqual(desa[0]["titulo"], "Plan de Salvación")
+        self.assertEqual(desa[0]["serie"], "Desayunos")
+        self.assertEqual(desa[0]["album"], "@BibliaViviente Dr. AAF Desayunos")
+        self.assertEqual(desa[0]["anio"], "")
+        self.assertEqual(desa[0]["source_url"], "")
+        self.assertEqual(desa[6]["archivo"], "DAAF_Armando_Alducin_F_DESA_07.opus")
+        self.assertEqual(desa[6]["titulo"], "Evidencias de la Biblia")
 
     def test_aliases_and_blank_rows(self):
         text = (
@@ -194,12 +204,13 @@ class TagAndFeedTests(unittest.TestCase):
             self.assertEqual(tags.getall("WXXX")[0].url, "https://youtu.be/3McxO3SnKHI")
             self.assertTrue(tags.getall("APIC"), "la carátula debe ir embebida")
             catalog = json.loads((folder / "episodes.json").read_text(encoding="utf-8"))
-            self.assertEqual(len(catalog["episodes"]), 2)
+            self.assertEqual(len(catalog["episodes"]), 9)
             published = [item for item in catalog["episodes"] if item["audio_url"]]
             self.assertEqual(published, [])
             by_file = {item["file"]: item for item in catalog["episodes"]}
             self.assertEqual(by_file["DAAF_Armando_Alducin_F_RESA_01.mp3"]["status"], "sin_fuente")
             self.assertEqual(by_file["DAAF_Armando_Alducin_F_DYEM_01.mp3"]["status"], "etiquetado")
+            self.assertEqual(by_file["DAAF_Armando_Alducin_F_DESA_01.opus"]["status"], "sin_fuente")
             self.assertGreater(by_file["DAAF_Armando_Alducin_F_DYEM_01.mp3"]["duration"], 0)
             feed_text = (folder / "feed.xml").read_text(encoding="utf-8")
             self.assertIn("xmlns:itunes=\"http://www.itunes.com/dtds/podcast-1.0.dtd\"", feed_text)
@@ -312,6 +323,12 @@ class TagAndFeedTests(unittest.TestCase):
             self.assertEqual(items[0].find(f"{{{ITUNES}}}duration").text, "00:01:35")
             explicit = channel.find(f"{{{ITUNES}}}explicit")
             self.assertEqual(explicit.text, "false")
+
+    def test_opus_filename_and_enclosure_type(self):
+        self.assertTrue(tp.FILENAME_RE.match("DAAF_Armando_Alducin_F_DESA_01.opus"))
+        self.assertEqual(tp.safe_filename("DAAF_Armando_Alducin_F_DESA_01.opus"), "DAAF_Armando_Alducin_F_DESA_01.opus")
+        self.assertEqual(tp.enclosure_type("DAAF_Armando_Alducin_F_DESA_01.opus"), "audio/ogg; codecs=opus")
+        self.assertEqual(tp.enclosure_type("DAAF_Armando_Alducin_F_DYEM_01.mp3"), "audio/mpeg")
 
 
 if __name__ == "__main__":

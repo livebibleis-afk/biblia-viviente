@@ -6,7 +6,7 @@
     <language>es</language>
     <description>Enseñanzas y reportajes del Dr. Armando Alducin F. Biblia App Lee.Oye.Ve — @BibliaViviente.</description>
     <copyright>Dr. Armando Alducin F. · @BibliaViviente</copyright>
-    <lastBuildDate>Thu, 19 Nov 2026 19:36:52 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 27 Nov 2026 04:18:50 +0000</lastBuildDate>
     <atom:link href="https://livebibleis-afk.github.io/biblia-viviente/feed.xml" rel="self" type="application/rss+xml" />
     <itunes:author>Dr. Armando Alducin F.</itunes:author>
     <itunes:summary>Enseñanzas y reportajes del Dr. Armando Alducin F. Biblia App Lee.Oye.Ve — @BibliaViviente.</itunes:summary>
@@ -24,6 +24,111 @@
       <title>@BibliaViviente · Dr. Armando Alducin F.</title>
       <link>https://livebibleis-afk.github.io/biblia-viviente/#podcast</link>
     </image>
+    <item>
+      <title>Evidencias de la Biblia</title>
+      <itunes:title>Evidencias de la Biblia</itunes:title>
+      <itunes:episode>7</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <description>Evidencias de la Biblia. Desayunos.</description>
+      <itunes:summary>Evidencias de la Biblia. Desayunos.</itunes:summary>
+      <itunes:author>Dr. Armando Alducin F.</itunes:author>
+      <itunes:image href="https://livebibleis-afk.github.io/biblia-viviente/data/podcast/cover.jpg" />
+      <enclosure url="https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_07.opus" length="12865841" type="audio/ogg; codecs=opus" />
+      <guid isPermaLink="false">DAAF_Armando_Alducin_F_DESA_07.opus</guid>
+      <pubDate>Fri, 27 Nov 2026 04:18:50 +0000</pubDate>
+      <itunes:duration>00:54:14</itunes:duration>
+      <link>https://livebibleis-afk.github.io/biblia-viviente/#podcast</link>
+    </item>
+    <item>
+      <title>Levantando la obra de Dios</title>
+      <itunes:title>Levantando la obra de Dios</itunes:title>
+      <itunes:episode>6</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <description>Levantando la obra de Dios. Desayunos.</description>
+      <itunes:summary>Levantando la obra de Dios. Desayunos.</itunes:summary>
+      <itunes:author>Dr. Armando Alducin F.</itunes:author>
+      <itunes:image href="https://livebibleis-afk.github.io/biblia-viviente/data/podcast/cover.jpg" />
+      <enclosure url="https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_06.opus" length="15682757" type="audio/ogg; codecs=opus" />
+      <guid isPermaLink="false">DAAF_Armando_Alducin_F_DESA_06.opus</guid>
+      <pubDate>Fri, 27 Nov 2026 04:18:50 +0000</pubDate>
+      <itunes:duration>01:04:51</itunes:duration>
+      <link>https://livebibleis-afk.github.io/biblia-viviente/#podcast</link>
+    </item>
+    <item>
+      <title>El nuevo nacimiento</title>
+      <itunes:title>El nuevo nacimiento</itunes:title>
+      <itunes:episode>5</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <description>El nuevo nacimiento. Desayunos.</description>
+      <itunes:summary>El nuevo nacimiento. Desayunos.</itunes:summary>
+      <itunes:author>Dr. Armando Alducin F.</itunes:author>
+      <itunes:image href="https://livebibleis-afk.github.io/biblia-viviente/data/podcast/cover.jpg" />
+      <enclosure url="https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_05.opus" length="14157189" type="audio/ogg; codecs=opus" />
+      <guid isPermaLink="false">DAAF_Armando_Alducin_F_DESA_05.opus</guid>
+      <pubDate>Fri, 27 Nov 2026 04:18:50 +0000</pubDate>
+      <itunes:duration>00:58:47</itunes:duration>
+      <link>https://livebibleis-afk.github.io/biblia-viviente/#podcast</link>
+    </item>
+    <item>
+      <title>Preparación para los tiempos finales</title>
+      <itunes:title>Preparación para los tiempos finales</itunes:title>
+      <itunes:episode>4</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <description>Preparación para los tiempos finales. Desayunos.</description>
+      <itunes:summary>Preparación para los tiempos finales. Desayunos.</itunes:summary>
+      <itunes:author>Dr. Armando Alducin F.</itunes:author>
+      <itunes:image href="https://livebibleis-afk.github.io/biblia-viviente/data/podcast/cover.jpg" />
+      <enclosure url="https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_04.opus" length="15741047" type="audio/ogg; codecs=opus" />
+      <guid isPermaLink="false">DAAF_Armando_Alducin_F_DESA_04.opus</guid>
+      <pubDate>Fri, 27 Nov 2026 04:18:50 +0000</pubDate>
+      <itunes:duration>01:04:26</itunes:duration>
+      <link>https://livebibleis-afk.github.io/biblia-viviente/#podcast</link>
+    </item>
+    <item>
+      <title>Sufriendo bajo las pruebas</title>
+      <itunes:title>Sufriendo bajo las pruebas</itunes:title>
+      <itunes:episode>3</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <description>Sufriendo bajo las pruebas. Desayunos.</description>
+      <itunes:summary>Sufriendo bajo las pruebas. Desayunos.</itunes:summary>
+      <itunes:author>Dr. Armando Alducin F.</itunes:author>
+      <itunes:image href="https://livebibleis-afk.github.io/biblia-viviente/data/podcast/cover.jpg" />
+      <enclosure url="https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_03.opus" length="12350932" type="audio/ogg; codecs=opus" />
+      <guid isPermaLink="false">DAAF_Armando_Alducin_F_DESA_03.opus</guid>
+      <pubDate>Fri, 27 Nov 2026 04:18:50 +0000</pubDate>
+      <itunes:duration>00:52:14</itunes:duration>
+      <link>https://livebibleis-afk.github.io/biblia-viviente/#podcast</link>
+    </item>
+    <item>
+      <title>El religioso y la pecadora</title>
+      <itunes:title>El religioso y la pecadora</itunes:title>
+      <itunes:episode>2</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <description>El religioso y la pecadora. Desayunos.</description>
+      <itunes:summary>El religioso y la pecadora. Desayunos.</itunes:summary>
+      <itunes:author>Dr. Armando Alducin F.</itunes:author>
+      <itunes:image href="https://livebibleis-afk.github.io/biblia-viviente/data/podcast/cover.jpg" />
+      <enclosure url="https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_02.opus" length="12762462" type="audio/ogg; codecs=opus" />
+      <guid isPermaLink="false">DAAF_Armando_Alducin_F_DESA_02.opus</guid>
+      <pubDate>Fri, 27 Nov 2026 04:18:50 +0000</pubDate>
+      <itunes:duration>00:52:33</itunes:duration>
+      <link>https://livebibleis-afk.github.io/biblia-viviente/#podcast</link>
+    </item>
+    <item>
+      <title>Plan de Salvación</title>
+      <itunes:title>Plan de Salvación</itunes:title>
+      <itunes:episode>1</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <description>Plan de Salvación. Desayunos.</description>
+      <itunes:summary>Plan de Salvación. Desayunos.</itunes:summary>
+      <itunes:author>Dr. Armando Alducin F.</itunes:author>
+      <itunes:image href="https://livebibleis-afk.github.io/biblia-viviente/data/podcast/cover.jpg" />
+      <enclosure url="https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_01.opus" length="791661" type="audio/ogg; codecs=opus" />
+      <guid isPermaLink="false">DAAF_Armando_Alducin_F_DESA_01.opus</guid>
+      <pubDate>Fri, 27 Nov 2026 04:18:50 +0000</pubDate>
+      <itunes:duration>00:03:15</itunes:duration>
+      <link>https://livebibleis-afk.github.io/biblia-viviente/#podcast</link>
+    </item>
     <item>
       <title>Introducción | Dios y la Existencia del Mal 01</title>
       <itunes:title>Introducción | Dios y la Existencia del Mal 01</itunes:title>

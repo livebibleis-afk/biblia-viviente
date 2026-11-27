@@ -23,6 +23,83 @@
       "processed_at": "2026-11-19T19:36:43+00:00",
       "chapters": [],
       "upload_date": "2015-07-14"
+    },
+    "DAAF_Armando_Alducin_F_DESA_01.opus": {
+      "status": "publicado",
+      "error": "",
+      "audio_url": "https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_01.opus",
+      "duration_seconds": 195.3,
+      "bytes": 791661,
+      "sha256": "87c588536189bc625fb59c87345ac95127804c0edbc4f3e9f2fbb900a9990857",
+      "source_url": "",
+      "processed_at": "2026-11-27T04:18:50+00:00",
+      "chapters": []
+    },
+    "DAAF_Armando_Alducin_F_DESA_02.opus": {
+      "status": "publicado",
+      "error": "",
+      "audio_url": "https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_02.opus",
+      "duration_seconds": 3153.0,
+      "bytes": 12762462,
+      "sha256": "8f6db116ce478f114d0b0e65cb39b0edd06db285f133da92d0e2c6e8c11e291c",
+      "source_url": "",
+      "processed_at": "2026-11-27T04:18:50+00:00",
+      "chapters": []
+    },
+    "DAAF_Armando_Alducin_F_DESA_03.opus": {
+      "status": "publicado",
+      "error": "",
+      "audio_url": "https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_03.opus",
+      "duration_seconds": 3134.0,
+      "bytes": 12350932,
+      "sha256": "91268cb878ab343312332f3c9bd96c8404113656ae71b3ef383e5c86f52b3670",
+      "source_url": "",
+      "processed_at": "2026-11-27T04:18:50+00:00",
+      "chapters": []
+    },
+    "DAAF_Armando_Alducin_F_DESA_04.opus": {
+      "status": "publicado",
+      "error": "",
+      "audio_url": "https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_04.opus",
+      "duration_seconds": 3865.9,
+      "bytes": 15741047,
+      "sha256": "26e8ca1e24f5f2869733819c1c3ea7486a28965bc21fa034838fc5bff7e6b2cc",
+      "source_url": "",
+      "processed_at": "2026-11-27T04:18:50+00:00",
+      "chapters": []
+    },
+    "DAAF_Armando_Alducin_F_DESA_05.opus": {
+      "status": "publicado",
+      "error": "",
+      "audio_url": "https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_05.opus",
+      "duration_seconds": 3527.1,
+      "bytes": 14157189,
+      "sha256": "16ce1bfa9440b5423353c90e37368beea7807155221b689a6dbbf0669d442d01",
+      "source_url": "",
+      "processed_at": "2026-11-27T04:18:50+00:00",
+      "chapters": []
+    },
+    "DAAF_Armando_Alducin_F_DESA_06.opus": {
+      "status": "publicado",
+      "error": "",
+      "audio_url": "https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_06.opus",
+      "duration_seconds": 3890.6,
+      "bytes": 15682757,
+      "sha256": "674f6e59a83a79a6f0f866dacd23ab6ec7507fdf81267d59cfb733d25ce390be",
+      "source_url": "",
+      "processed_at": "2026-11-27T04:18:50+00:00",
+      "chapters": []
+    },
+    "DAAF_Armando_Alducin_F_DESA_07.opus": {
+      "status": "publicado",
+      "error": "",
+      "audio_url": "https://github.com/livebibleis-afk/biblia-viviente/releases/download/podcast/DAAF_Armando_Alducin_F_DESA_07.opus",
+      "duration_seconds": 3254.0,
+      "bytes": 12865841,
+      "sha256": "04a2762f0b54d1fb268a1ab9c1572b4a64fcaa57683ba5533883f4bd6bae16d1",
+      "source_url": "",
+      "processed_at": "2026-11-27T04:18:50+00:00",
+      "chapters": []
     }
   },
   "release_tag": "podcast",
