@@ -102,38 +102,57 @@
   </header>
 
   <main class="main max-w-4xl w-full mx-auto px-4 sm:px-6 py-6">
-    <section id="view-books" class="view space-y-6">
-      <div id="continue-reading-card" class="hidden bg-gradient-to-r from-indigo-900/40 via-indigo-950/60 to-slate-900 border border-indigo-500/30 rounded-2xl p-5 shadow-xl flex items-center justify-between cursor-pointer hover:border-indigo-400 transition-all group">
-        <div class="space-y-1">
-          <div class="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider">
-            <i class="fa-solid fa-clock-rotate-left"></i> Continuar leyendo
+    <section id="view-books" class="view space-y-8">
+      <section id="podcast" class="podcast-home" aria-label="Podcast">
+        <div class="podcast-hero">
+          <img id="podcast-cover" src="data/podcast/cover.jpg" alt="Carátula @BibliaViviente Dr. AAF" width="112" height="112" />
+          <div class="podcast-hero-text">
+            <p class="podcast-kicker">Podcast<span id="podcast-entry-count"></span></p>
+            <h2 id="podcast-heading">Dr. Armando Alducin F.</h2>
+            <p id="podcast-desc" class="podcast-desc">Enseñanzas publicadas por @BibliaViviente.</p>
+            <a id="podcast-rss" class="podcast-rss" href="feed.xml">
+              <i class="fa-solid fa-rss" aria-hidden="true"></i> Suscribirse por RSS
+            </a>
           </div>
-          <h3 id="continue-title" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-indigo-300 transition-colors">Génesis 1</h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Retoma tu lectura exactamente donde la dejaste</p>
         </div>
-        <div class="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
-          <i class="fa-solid fa-arrow-right"></i>
+        <div class="search-bar">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input id="search-podcast" type="search" placeholder="Buscar por título, serie, tema o cita…" aria-label="Buscar episodios" autocomplete="off" />
         </div>
-      </div>
-      <a href="#podcast" id="btn-open-podcast" class="podcast-entry">
-        <span class="podcast-entry-icon" aria-hidden="true"><i class="fa-solid fa-podcast"></i></span>
-        <span class="podcast-entry-copy">
-          <span class="podcast-entry-kicker">Podcast</span>
-          <span class="podcast-entry-title">Dr. Armando Alducin F.</span>
-          <span class="podcast-entry-sub">Enseñanzas por serie, con reproductor y RSS<span id="podcast-entry-count"></span></span>
-        </span>
-        <i class="fa-solid fa-chevron-right podcast-entry-chevron" aria-hidden="true"></i>
-      </a>
-      <div class="search-bar">
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input id="search-books" type="text" placeholder="Filtrar libros por nombre..." aria-label="Filtrar libros" />
-      </div>
-      <div class="testament-tabs">
-        <button data-testament="all" class="tab active">Todos</button>
-        <button data-testament="old" class="tab">Antiguo Testamento (<span id="count-ot">39</span>)</button>
-        <button data-testament="new" class="tab">Nuevo Testamento (<span id="count-nt">27</span>)</button>
-      </div>
-      <div id="books-grid" class="books-grid"></div>
+        <div id="podcast-filters" class="podcast-filters" aria-label="Filtrar por serie"></div>
+        <div id="podcast-list" class="podcast-list" aria-live="polite">
+          <p class="empty-state">Cargando episodios…</p>
+        </div>
+      </section>
+
+      <section id="biblia" class="bible-home" aria-label="Leer la Biblia">
+        <div class="bible-home-head">
+          <p class="bible-kicker">Biblia</p>
+          <h2 class="bible-home-title">Leer la Biblia</h2>
+        </div>
+        <div id="continue-reading-card" class="hidden bg-gradient-to-r from-indigo-900/40 via-indigo-950/60 to-slate-900 border border-indigo-500/30 rounded-2xl p-5 shadow-xl flex items-center justify-between cursor-pointer hover:border-indigo-400 transition-all group">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+              <i class="fa-solid fa-clock-rotate-left"></i> Continuar leyendo
+            </div>
+            <h3 id="continue-title" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-indigo-300 transition-colors">Génesis 1</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Retoma tu lectura exactamente donde la dejaste</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+            <i class="fa-solid fa-arrow-right"></i>
+          </div>
+        </div>
+        <div class="search-bar">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input id="search-books" type="text" placeholder="Filtrar libros por nombre..." aria-label="Filtrar libros" />
+        </div>
+        <div class="testament-tabs">
+          <button data-testament="all" class="tab active">Todos</button>
+          <button data-testament="old" class="tab">Antiguo Testamento (<span id="count-ot">39</span>)</button>
+          <button data-testament="new" class="tab">Nuevo Testamento (<span id="count-nt">27</span>)</button>
+        </div>
+        <div id="books-grid" class="books-grid"></div>
+      </section>
     </section>
 
     <section id="view-chapters" class="view hidden space-y-6">
@@ -179,31 +198,10 @@
       </div>
     </section>
 
-    <section id="view-podcast" class="view hidden" aria-label="Podcast">
-      <div class="podcast-hero">
-        <img id="podcast-cover" src="data/podcast/cover.jpg" alt="Carátula @BibliaViviente Dr. AAF" width="112" height="112" />
-        <div class="podcast-hero-text">
-          <p class="podcast-kicker">Podcast</p>
-          <h2 id="podcast-heading">Dr. Armando Alducin F.</h2>
-          <p id="podcast-desc" class="podcast-desc">Enseñanzas publicadas por @BibliaViviente.</p>
-          <a id="podcast-rss" class="podcast-rss" href="feed.xml">
-            <i class="fa-solid fa-rss" aria-hidden="true"></i> Suscribirse por RSS
-          </a>
-        </div>
-      </div>
-      <div class="search-bar">
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input id="search-podcast" type="search" placeholder="Buscar por título, serie, tema o cita…" aria-label="Buscar episodios" autocomplete="off" />
-      </div>
-      <div id="podcast-filters" class="podcast-filters" aria-label="Filtrar por serie"></div>
-      <div id="podcast-list" class="podcast-list" aria-live="polite">
-        <p class="empty-state">Cargando episodios…</p>
-      </div>
-    </section>
   </main>
 
   <div id="podcast-now" class="podcast-now hidden" hidden>
-    <audio id="podcast-audio" preload="none"></audio>
+    <audio id="podcast-audio" preload="none" controlslist="nodownload"></audio>
     <div class="podcast-now-row">
       <button type="button" id="podcast-now-play" class="chapter-audio-play" aria-label="Reproducir">
         <i class="fa-solid fa-play"></i>

@@ -63,6 +63,10 @@
     const list = [...map.entries()];
     list.forEach((entry) => entry[1].sort((a, b) => (a.track || 0) - (b.track || 0)));
     list.sort((a, b) => {
+      const playA = a[1].filter((episode) => episode.audio_url).length;
+      const playB = b[1].filter((episode) => episode.audio_url).length;
+      if ((playA > 0) !== (playB > 0)) return playB - playA;
+      if (playA !== playB) return playB - playA;
       const yearA = Math.max(...a[1].map((episode) => episode.year || 0));
       const yearB = Math.max(...b[1].map((episode) => episode.year || 0));
       return yearB - yearA;
@@ -211,13 +215,31 @@
     if (durationEl) durationEl.textContent = formatTime(episode.duration || audio.duration || 0);
   }
 
+  function audioMime(url) {
+    const path = (url || '').split('?')[0].toLowerCase();
+    if (path.endsWith('.opus')) return 'audio/ogg; codecs=opus';
+    if (path.endsWith('.ogg') || path.endsWith('.oga')) return 'audio/ogg';
+    if (path.endsWith('.m4a') || path.endsWith('.aac')) return 'audio/mp4';
+    return 'audio/mpeg';
+  }
+
+  function setEpisodeSource(url) {
+    audio.removeAttribute('src');
+    audio.querySelectorAll('source').forEach((el) => el.remove());
+    const source = document.createElement('source');
+    source.src = url;
+    source.type = audioMime(url);
+    audio.appendChild(source);
+    audio.load();
+  }
+
   function playEpisode(episode, startAt) {
     if (!episode || !episode.audio_url) return;
     if (typeof pauseChapterAudio === 'function') pauseChapterAudio();
     if (window.speechSynthesis) window.speechSynthesis.cancel();
-    const same = state.currentId === episode.id && audio.src;
+    const same = state.currentId === episode.id && (audio.currentSrc || audio.src);
     if (!same) {
-      audio.src = episode.audio_url;
+      setEpisodeSource(episode.audio_url);
       state.currentId = episode.id;
     }
     showNow(episode);
@@ -226,7 +248,13 @@
       if (start !== null && isFinite(start)) audio.currentTime = start;
       syncTransport();
     }).catch(() => {
-      if (nowSeries) nowSeries.textContent = 'No se pudo reproducir este audio.';
+      const mime = audioMime(episode.audio_url);
+      const supported = audio.canPlayType(mime) || audio.canPlayType('audio/ogg; codecs=opus') || audio.canPlayType('audio/ogg');
+      if (nowSeries) {
+        nowSeries.textContent = supported
+          ? 'No se pudo reproducir este audio.'
+          : 'Este navegador no reproduce Opus. Prueba en Chrome, Firefox o Edge.';
+      }
       syncTransport();
     });
     syncTransport();

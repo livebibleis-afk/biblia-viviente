@@ -20,7 +20,7 @@ function isChapterAudioRequest(request) {
   if (request.method !== 'GET' && request.method !== 'HEAD') return false;
   const url = new URL(request.url);
   if (request.destination === 'audio') return true;
-  return /\.(mp3|m4a|ogg|wav)$/i.test(url.pathname) || /\/audio\//.test(url.pathname);
+  return /\.(mp3|m4a|ogg|opus|wav)$/i.test(url.pathname) || /\/audio\//.test(url.pathname);
 }
 
 self.addEventListener('fetch', (event) => {
